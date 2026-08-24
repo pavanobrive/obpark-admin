@@ -1,4 +1,3 @@
-// apps/web/app/admin/customers/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -50,7 +49,7 @@ export default function CustomersPage() {
     trend: 'Visitor tracking not connected',
   },
 ].map((k) => (
-              <div key={k.label} className="bg-white border rounded-xl p-5">
+              <div key={k.label} className="bg-white border rounded-xl p-5 shadow-md">
                 <div className="flex items-start justify-between">
                   <p className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-700`}>{k.label}</p>
                   <MoreVertical className="h-4 w-4 text-gray-300" />
@@ -61,7 +60,7 @@ export default function CustomersPage() {
             ))}
           </div>
 
-          <div className="lg:col-span-3 bg-white border rounded-xl p-6">
+          <div className="lg:col-span-3 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-gray-800`}>Customer Overview</h2>
               <div className="flex gap-1 text-xs">

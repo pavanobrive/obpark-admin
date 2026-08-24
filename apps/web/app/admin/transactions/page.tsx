@@ -45,7 +45,7 @@ export default function TransactionsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
             {kpis.map((k) => (
-              <div key={k.label} className="bg-white border rounded-xl p-5">
+              <div key={k.label} className="bg-white border rounded-xl p-5 shadow-md">
                 <div className="flex items-start justify-between">
                   <p className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-700`}>{k.label}</p>
                   <MoreVertical className="h-4 w-4 text-gray-300" />
@@ -56,7 +56,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Payment Method card */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-center justify-between mb-3">
               <p className={`${microgrammaBold.className} font-semibold text-gray-800 text-[16px]`}>Payment Method</p>
               <MoreVertical className="h-4 w-4 text-gray-300" />
@@ -76,7 +76,7 @@ export default function TransactionsPage() {
         </div>
 
         {/* Filter tabs + table */}
-        <div className="bg-white border rounded-xl p-4">
+        <div className="bg-white border rounded-xl p-4 shadow-md">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div className="flex bg-gray-50 rounded-lg p-1 text-sm overflow-x-auto">
               {TABS.map((tab) => (

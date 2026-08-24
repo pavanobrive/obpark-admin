@@ -1,4 +1,3 @@
-// apps/web/app/admin/analytics/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -96,7 +95,7 @@ export default function AnalyticsPage() {
             { label: 'Active Coupons', value: activeCoupons, icon: Ticket, bg: 'bg-purple-50', color: 'text-purple-600', loading: couponsLoading },
             { label: 'Coupon Redemptions', value: totalRedemptions, icon: CreditCard, bg: 'bg-amber-50', color: 'text-amber-600', loading: couponsLoading },
           ].map((k) => (
-            <div key={k.label} className="bg-white border rounded-xl p-5">
+            <div key={k.label} className="bg-white border rounded-xl p-5 shadow-md">
               <div className={`w-10 h-10 rounded-lg ${k.bg} flex items-center justify-center mb-3`}>
                 <k.icon className={`h-5 w-5 ${k.color}`} />
               </div>
@@ -108,7 +107,7 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue trend — real, from AnalyticsService.getRevenueTrend */}
-          <div className="lg:col-span-2 bg-white border rounded-xl p-6">
+          <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Revenue Trend</h2>
               <Link href="/admin/orders" className="text-xs text-blue-500 flex items-center gap-1">
@@ -135,7 +134,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Order status breakdown — real, from AnalyticsService.getOrderStatusBreakdown */}
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-2">
               <h2 className={`${microgrammaBold.className} font-semibold text-[16px] text-gray-800`}>Order Status</h2>
               <Link href="/admin/orders" className="text-xs text-blue-500 flex items-center gap-1">
@@ -173,7 +172,7 @@ export default function AnalyticsPage() {
 
         {/* Bottom row: Top products (real) + Coupon performance (real) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Top Products</h2>
               <Link href="/admin/products" className="text-xs text-blue-500 flex items-center gap-1">
@@ -200,7 +199,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Coupon Performance</h2>
               <Link href="/admin/coupons" className="text-xs text-blue-500 flex items-center gap-1">

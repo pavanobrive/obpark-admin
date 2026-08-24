@@ -1,4 +1,3 @@
-// apps/web/app/admin/coupons/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -116,7 +115,7 @@ const { register, handleSubmit, reset, watch } = useForm<CouponFormValues>({ def
             { label: 'Expired Coupons', value: expiredCount },
             { label: 'Total Redemptions', value: totalUses },
           ].map((k) => (
-            <div key={k.label} className="bg-white border rounded-xl p-5">
+            <div key={k.label} className="bg-white border rounded-xl p-5 shadow-md">
               <div className="flex items-start justify-between">
                 <p className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-700`}>{k.label}</p>
                 <MoreVertical className="h-4 w-4 text-gray-300" />
@@ -128,7 +127,7 @@ const { register, handleSubmit, reset, watch } = useForm<CouponFormValues>({ def
         </div>
 
         {/* Filter tabs + table */}
-        <div className="bg-white border rounded-xl p-4">
+        <div className="bg-white border rounded-xl p-4 shadow-md">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div className="flex bg-gray-50 rounded-lg p-1 text-sm overflow-x-auto">
               {TABS.map((tab) => (
@@ -224,7 +223,7 @@ const { register, handleSubmit, reset, watch } = useForm<CouponFormValues>({ def
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowForm(false)} />
-          <div className="relative w-full max-w-md mx-4 bg-white rounded-xl p-6 space-y-5">
+          <div className="relative w-full max-w-md mx-4 bg-white rounded-xl p-6 space-y-5 shadow-md">
             <div className="flex items-center justify-between">
               <h2 className={`${microgrammaBold.className} font-bold text-lg`} style={{ color: '#074139' }}>Create Coupon</h2>
               <button onClick={() => setShowForm(false)}><X className="h-5 w-5 text-gray-400" /></button>

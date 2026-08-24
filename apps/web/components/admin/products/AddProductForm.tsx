@@ -1,4 +1,3 @@
-// apps/web/components/admin/products/AddProductForm.tsx
 'use client'
 
 import { useState } from 'react'
@@ -85,7 +84,7 @@ export function AddProductForm() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           {/* Basic Details */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
+          <div className="bg-white border rounded-xl p-6 space-y-4 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Basic Details</h3>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Product Name</label>
@@ -119,7 +118,7 @@ export function AddProductForm() {
           </div>
 
           {/* Pricing */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
+          <div className="bg-white border rounded-xl p-6 space-y-4 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Pricing</h3>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Product Price (₹)</label>
@@ -173,7 +172,7 @@ export function AddProductForm() {
           </div>
 
           {/* Inventory */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
+          <div className="bg-white border rounded-xl p-6 space-y-4 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Inventory</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -235,7 +234,7 @@ export function AddProductForm() {
 
         <div className="space-y-6">
           {/* Upload Product Image */}
-          <div className="bg-white border rounded-xl p-6 space-y-3">
+          <div className="bg-white border rounded-xl p-6 space-y-3 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Upload Product Image</h3>
             <p className="text-xs text-gray-400">Product Image</p>
             <div className="border rounded-xl h-56 flex items-center justify-center text-gray-300 text-sm bg-gray-50">
@@ -260,7 +259,7 @@ export function AddProductForm() {
           </div>
 
           {/* Categories */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
+          <div className="bg-white border rounded-xl p-6 space-y-4 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Categories</h3>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Product Categories</label>

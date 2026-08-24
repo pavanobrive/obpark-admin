@@ -3,10 +3,7 @@
 import { Upload, Trash2, Search } from 'lucide-react'
 import { useAdminProducts } from '@/hooks/useAdminProducts'
 
-// TODO: no media-library model exists in backend at all — this is entirely placeholder.
-// Real version needs: a MediaAsset table (or reuse Product.images[] you already store),
-// an upload endpoint (S3 presigned URL — you already planned this for Week 3 admin product images),
-// and a way to see which products use which image.
+
 export function ProductMediaGrid() {
   const { data, isLoading } = useAdminProducts()
 
@@ -17,7 +14,7 @@ export function ProductMediaGrid() {
       </div>
 
 
-      <div className="bg-white border rounded-xl p-6">
+      <div className="bg-white border rounded-xl p-6 shadow-md">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h3 className="font-semibold text-gray-800">Product Images</h3>
           <div className="flex items-center gap-2">

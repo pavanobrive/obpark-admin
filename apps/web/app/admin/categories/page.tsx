@@ -152,7 +152,7 @@ export default function CategoriesPage() {
           ) : (
             <div className="flex gap-4 min-w-[700px]">
               {categories.map((cat) => (
-                <div key={cat.id} className="relative group bg-white border rounded-xl p-4 flex flex-col items-center gap-2 w-32 shrink-0 hover:shadow-sm">
+                <div key={cat.id} className="relative group bg-white border rounded-xl p-4 flex flex-col items-center gap-2 w-32 shrink-0 shadow-md hover:shadow-sm">
                   <button
                     onClick={() => handleDelete(cat.id, cat.name)}
                     className="absolute top-1.5 right-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -172,7 +172,7 @@ export default function CategoriesPage() {
         </div>
 
         {/* Filter tabs + table */}
-        <div className="bg-white border rounded-xl p-4">
+        <div className="bg-white border rounded-xl p-4 shadow-md">
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div className="flex bg-gray-50 rounded-lg p-1 text-sm overflow-x-auto">
               {TABS.map((tab) => (

@@ -17,7 +17,7 @@ export function ProductReviewsList() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border rounded-xl p-6">
+      <div className="bg-white border rounded-xl p-6 shadow-md">
         <h3 className="font-semibold text-gray-800 mb-4">Customer Reviews</h3>
 
         {isLoading ? (
