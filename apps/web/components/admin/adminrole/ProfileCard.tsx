@@ -11,7 +11,7 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
   return (
-    <div className="bg-white border rounded-xl p-6">
+    <div className="bg-white border rounded-xl p-6 shadow-md">
       <div className="flex items-center justify-between mb-4">
         <h3 className={`text-[16px] font-semibold text-gray-800 ${microgrammaBold.className}`}>Profile</h3>
         <div className="flex items-center gap-2 text-gray-400">

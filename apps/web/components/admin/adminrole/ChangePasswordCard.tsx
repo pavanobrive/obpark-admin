@@ -18,7 +18,7 @@ export function ChangePasswordCard() {
   }
 
   return (
-    <div className="bg-white border rounded-xl p-6 space-y-4">
+    <div className="bg-white border rounded-xl p-6 space-y-4 shadow-md">
       <div className="flex items-center justify-between">
         <h3 className={`font-semibold text-gray-800 ${microgrammaBold.className}`}>Change Password</h3>
         <button className="text-xs text-blue-500">Need help?</button>

@@ -44,7 +44,7 @@ export function ProfileUpdateForm({ profile }: ProfileUpdateFormProps) {
   }
 
   return (
-    <div className="bg-white border rounded-xl p-6 space-y-5">
+    <div className="bg-white border rounded-xl p-6 space-y-5 shadow-md">
       <div className="flex items-center justify-between">
         <h3 className={`font-semibold text-gray-800 ${microgrammaBold.className}`}>Profile Update</h3>
         <button
