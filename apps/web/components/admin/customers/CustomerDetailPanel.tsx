@@ -72,23 +72,39 @@ export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
           </div>
 
           {/* Order overview */}
-          <div>
-            <p className="text-xs text-gray-400 mb-2">Order overview</p>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="border rounded-lg p-2 text-center">
-                <p className="font-bold text-gray-800">{customer.orders}</p>
-                <p className="text-[10px] text-gray-400">Total order</p>
-              </div>
-              <div className="border rounded-lg p-2 text-center">
-                <p className="font-bold text-green-600">{Math.round(customer.orders * 0.9)}</p>
-                <p className="text-[10px] text-gray-400">Completed</p>
-              </div>
-              <div className="border rounded-lg p-2 text-center">
-                <p className="font-bold text-red-500">{Math.round(customer.orders * 0.1)}</p>
-                <p className="text-[10px] text-gray-400">Canceled</p>
-              </div>
-            </div>
-          </div>
+          {/* Order overview */}
+<div>
+  <p className="text-xs text-gray-400 mb-2">Order overview</p>
+
+  <div className="grid grid-cols-3 gap-2">
+    <div className="border rounded-lg p-2 text-center">
+      <p className="font-bold text-gray-800">
+        {customer.orderCount}
+      </p>
+      <p className="text-[10px] text-gray-400">
+        Total order
+      </p>
+    </div>
+
+    <div className="border rounded-lg p-2 text-center">
+      <p className="font-bold text-green-600">
+        {customer.orderCount}
+      </p>
+      <p className="text-[10px] text-gray-400">
+        Orders
+      </p>
+    </div>
+
+    <div className="border rounded-lg p-2 text-center">
+      <p className="font-bold text-gray-800">
+        ₹{customer.totalSpend.toLocaleString('en-IN')}
+      </p>
+      <p className="text-[10px] text-gray-400">
+        Total Spend
+      </p>
+    </div>
+  </div>
+</div>
         </div>
       )}
     </div>

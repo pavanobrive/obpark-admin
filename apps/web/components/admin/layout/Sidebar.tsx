@@ -21,7 +21,6 @@ const NAV_GROUPS = [
       { href: '/admin/categories', label: 'Categories', icon: FolderTree },
       { href: '/admin/transactions', label: 'Transaction', icon: CreditCard },
       { href: '/admin/analytics', label: 'Analytics', icon: LayoutDashboard },
-      
     ],
   },
   {

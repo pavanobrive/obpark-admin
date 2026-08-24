@@ -16,6 +16,7 @@ export function ProductMediaGrid() {
         No dedicated media library exists in the backend yet — showing product thumbnails as a stand-in. Real version needs an upload endpoint and asset table.
       </div>
 
+
       <div className="bg-white border rounded-xl p-6">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h3 className="font-semibold text-gray-800">Product Images</h3>

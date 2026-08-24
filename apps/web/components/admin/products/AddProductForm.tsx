@@ -4,29 +4,34 @@
 import { useState } from 'react'
 import { Search, Save, Upload, Plus, Wand2, Pencil, RefreshCw, ChevronDown } from 'lucide-react'
 import { useCreateProduct } from '@/hooks/useCreateProduct'
+import { useCategories } from '@/hooks/useCategories'
 import { microgrammaBold } from '@/lib/fonts'
 
 const COLORS = ['#C7E8D4', '#F4C4C4', '#C4CCD4', '#EDE1B0', '#3A3A3A']
 
 export function AddProductForm() {
-  const [form, setForm] = useState({ name: '', description: '', price: '', discountedPrice: '', stock: '' })
+  const [form, setForm] = useState({ name: '', description: '', price: '', discountedPrice: '', stock: '', categoryId: '' })
   const [unlimited, setUnlimited] = useState(true)
   const [selectedColor, setSelectedColor] = useState(0)
   const createProduct = useCreateProduct()
+  const { data: categories = [] } = useCategories()
 
   const salePrice = form.price && form.discountedPrice
     ? (parseFloat(form.price) - parseFloat(form.discountedPrice)).toFixed(2)
     : null
 
+  const canPublish = form.name.trim() !== '' && form.price !== '' && form.categoryId !== ''
+
   const handlePublish = () => {
+    if (!canPublish) return
     createProduct.mutate({
       name: form.name,
-      slug: form.name.toLowerCase().replace(/\s+/g, '-'),
+      slug: form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       description: form.description,
       basePrice: parseFloat(form.price) || 0,
       sku: `SKU-${Date.now()}`,
       stock: unlimited ? 0 : parseInt(form.stock) || 0,
-      categoryId: '', // TODO: wire to real category select once GET /categories is connected here
+      categoryId: form.categoryId,
     })
   }
 
@@ -43,8 +48,8 @@ export function AddProductForm() {
           </div>
           <button
             onClick={handlePublish}
-            disabled={createProduct.isPending}
-            className={`${microgrammaBold.className} px-4 py-2 rounded-lg text-[16px] text-white font-medium`}
+            disabled={createProduct.isPending || !canPublish}
+            className={`${microgrammaBold.className} px-4 py-2 rounded-lg text-[16px] text-white font-medium disabled:opacity-50`}
             style={{ backgroundColor: '#074139' }}
           >
             {createProduct.isPending ? 'Publishing...' : 'Publish Product'}
@@ -72,6 +77,9 @@ export function AddProductForm() {
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2.5 rounded-lg">
           Something went wrong — check required fields and try again.
         </div>
+      )}
+      {!canPublish && (form.name || form.price) && (
+        <p className="text-xs text-amber-600">Name, price, and category are required before publishing.</p>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -215,8 +223,8 @@ export function AddProductForm() {
               </button>
               <button
                 onClick={handlePublish}
-                disabled={createProduct.isPending}
-                className={`${microgrammaBold.className} px-4 py-2 rounded-lg text-[16px] text-white font-medium`}
+                disabled={createProduct.isPending || !canPublish}
+                className={`${microgrammaBold.className} px-4 py-2 rounded-lg text-[16px] text-white font-medium disabled:opacity-50`}
                 style={{ backgroundColor: '#074139' }}
               >
                 {createProduct.isPending ? 'Publishing...' : 'Publish Product'}
@@ -248,6 +256,7 @@ export function AddProductForm() {
                 <span className="text-[10px]">Add Image</span>
               </button>
             </div>
+            <p className="text-[10px] text-amber-600">Image upload not yet built — needs S3/storage endpoint</p>
           </div>
 
           {/* Categories */}
@@ -255,17 +264,26 @@ export function AddProductForm() {
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Categories</h3>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Product Categories</label>
-              <select className="w-full px-3 py-2 rounded-lg border text-sm outline-none">
-                <option>Select your category</option>
-                {/* TODO: populate from GET /categories */}
+              <select
+                value={form.categoryId}
+                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+              >
+                <option value="">Select your category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
+              {categories.length === 0 && (
+                <p className="text-[10px] text-amber-600 mt-1">No categories yet — create one on the Categories page first</p>
+              )}
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Product Tag</label>
               <select className="w-full px-3 py-2 rounded-lg border text-sm outline-none">
                 <option>Select your product</option>
-                {/* TODO: populate from real tag source once it exists */}
               </select>
+              <p className="text-[10px] text-amber-600 mt-1">Product tags not yet in backend schema</p>
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-2 block">Select your color</label>

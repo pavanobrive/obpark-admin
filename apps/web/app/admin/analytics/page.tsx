@@ -25,42 +25,58 @@ interface Coupon {
   expiresAt?: string
 }
 
-const WEEKLY_REPORT = [
-  { day: 'Sun', value: 16000 }, { day: 'Mon', value: 27000 }, { day: 'Tue', value: 27000 },
-  { day: 'Wed', value: 14000 }, { day: 'Thu', value: 22000 }, { day: 'Fri', value: 30000 }, { day: 'Sat', value: 30000 },
-]
+const STATUS_COLOR: Record<string, string> = {
+  DELIVERED: '#22c55e',
+  PENDING: '#f59e0b',
+  PROCESSING: '#3b82f6',
+  CANCELLED: '#ef4444',
+}
 
-// TODO: replace with real status breakdown once GET /admin/orders returns aggregated counts per status
-const ORDER_STATUS_BREAKDOWN = [
-  { name: 'Delivered', value: 62, color: '#22c55e' },
-  { name: 'Pending', value: 18, color: '#f59e0b' },
-  { name: 'Processing', value: 12, color: '#3b82f6' },
-  { name: 'Cancelled', value: 8, color: '#ef4444' },
-]
+const STATUS_LABEL: Record<string, string> = {
+  DELIVERED: 'Delivered',
+  PENDING: 'Pending',
+  PROCESSING: 'Processing',
+  CANCELLED: 'Cancelled',
+}
 
 export default function AnalyticsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  // Real — same endpoint Dashboard uses
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: () => api.get<DashboardStats>('/admin/dashboard'),
   })
 
-  // Real — same endpoint Products page uses
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['admin', 'products', 'top'],
     queryFn: () => api.get<{ products: any[] }>('/admin/products?limit=5'),
   })
 
-  // Real — same endpoint Coupons page uses
   const { data: coupons, isLoading: couponsLoading } = useQuery({
     queryKey: ['admin', 'coupons'],
     queryFn: () => api.get<Coupon[]>('/coupons'),
   })
 
+  const { data: revenueTrend, isLoading: trendLoading } = useQuery({
+    queryKey: ['admin', 'analytics', 'revenue-trend'],
+    queryFn: () => api.get<{ day: string; value: number }[]>('/admin/analytics/revenue-trend'),
+  })
+
+  const { data: statusBreakdown, isLoading: statusLoading } = useQuery({
+    queryKey: ['admin', 'analytics', 'order-status-breakdown'],
+    queryFn: () => api.get<{ name: string; value: number }[]>('/admin/analytics/order-status-breakdown'),
+  })
+
   const activeCoupons = coupons?.filter((c) => c.isActive && (!c.expiresAt || new Date(c.expiresAt) > new Date())).length ?? 0
   const totalRedemptions = coupons?.reduce((sum, c) => sum + c.usedCount, 0) ?? 0
+
+  const chartData = revenueTrend ?? []
+  const statusData = (statusBreakdown ?? []).map((s) => ({
+    name: STATUS_LABEL[s.name] ?? s.name,
+    value: s.value,
+    color: STATUS_COLOR[s.name] ?? '#9ca3af',
+  }))
+  const hasOrders = statusData.some((s) => s.value > 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,7 +107,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue trend — placeholder chart, same as Dashboard's until day-by-day endpoint exists */}
+          {/* Revenue trend — real, from AnalyticsService.getRevenueTrend */}
           <div className="lg:col-span-2 bg-white border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Revenue Trend</h2>
@@ -100,7 +116,7 @@ export default function AnalyticsPage() {
               </Link>
             </div>
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={WEEKLY_REPORT}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="analyticsRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#A2F1DF" stopOpacity={0.6} />
@@ -109,13 +125,16 @@ export default function AnalyticsPage() {
                 </defs>
                 <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={11} />
                 <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip />
+                <Tooltip formatter={(v: any) => `₹${Number(v).toLocaleString('en-IN')}`} />
                 <Area type="monotone" dataKey="value" stroke="#22c55e" fill="url(#analyticsRev)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
+            {!trendLoading && chartData.every((d) => d.value === 0) && (
+              <p className="text-xs text-gray-400 text-center mt-2">No paid orders in the last 7 days yet</p>
+            )}
           </div>
 
-          {/* Order status breakdown — placeholder until aggregated counts exist */}
+          {/* Order status breakdown — real, from AnalyticsService.getOrderStatusBreakdown */}
           <div className="bg-white border rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className={`${microgrammaBold.className} font-semibold text-[16px] text-gray-800`}>Order Status</h2>
@@ -123,24 +142,32 @@ export default function AnalyticsPage() {
                 View <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={ORDER_STATUS_BREAKDOWN} dataKey="value" innerRadius={40} outerRadius={65} paddingAngle={2}>
-                  {ORDER_STATUS_BREAKDOWN.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+            {statusLoading ? (
+              <div className="h-40 flex items-center justify-center text-sm text-gray-400">Loading...</div>
+            ) : !hasOrders ? (
+              <div className="h-40 flex items-center justify-center text-sm text-gray-400">No orders yet</div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie data={statusData} dataKey="value" innerRadius={40} outerRadius={65} paddingAngle={2}>
+                      {statusData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {statusData.map((s) => (
+                    <div key={s.name} className="flex items-center gap-1.5 text-xs">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                      <span className="text-gray-600">{s.name} ({s.value}%)</span>
+                    </div>
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {ORDER_STATUS_BREAKDOWN.map((s) => (
-                <div key={s.name} className="flex items-center gap-1.5 text-xs">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-gray-600">{s.name} ({s.value}%)</span>
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>
 

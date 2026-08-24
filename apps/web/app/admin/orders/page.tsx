@@ -39,6 +39,11 @@ export default function OrdersPage() {
     queryFn: () => api.get<{ totalOrders: number; pendingOrders: number }>('/admin/dashboard'),
   })
 
+  const { data: counts } = useQuery({
+    queryKey: ['admin', 'orders', 'counts'],
+    queryFn: () => api.get<{ newOrders: number; completed: number; canceled: number }>('/admin/orders/counts'),
+  })
+
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'orders', page],
     queryFn: () => api.get<{ orders: AdminOrder[]; total: number }>(`/admin/orders?limit=${limit}&offset=${(page - 1) * limit}`),
@@ -50,12 +55,11 @@ export default function OrdersPage() {
 
   const totalPages = Math.ceil((data?.total ?? 0) / limit)
 
-  // TODO: needs dedicated backend counts — currently only total + pending exist
   const kpis = [
-    { label: 'Total Orders', value: dash?.totalOrders ?? '—', trend: '↑ 14.4%', up: true },
-    { label: 'New Orders', value: '—', trend: 'needs backend', up: null },
-    { label: 'Completed Orders', value: '—', trend: 'needs backend', up: null },
-    { label: 'Canceled Orders', value: '—', trend: 'needs backend', up: null },
+    { label: 'Total Orders', value: dash?.totalOrders ?? '—' },
+    { label: 'New Orders', value: counts?.newOrders ?? '—' },
+    { label: 'Completed Orders', value: counts?.completed ?? '—' },
+    { label: 'Canceled Orders', value: counts?.canceled ?? '—' },
   ]
 
   return (
@@ -87,7 +91,6 @@ export default function OrdersPage() {
               </div>
               <div className="mt-2 flex items-baseline gap-2">
                 <p className="text-2xl font-bold text-gray-800">{k.value}</p>
-                <span className={`text-xs font-medium ${k.up ? 'text-green-500' : 'text-gray-400'}`}>{k.trend}</span>
               </div>
               <p className="text-xs text-gray-400 mt-1">Last 7 days</p>
             </div>

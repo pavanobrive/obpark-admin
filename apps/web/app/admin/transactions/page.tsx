@@ -4,26 +4,37 @@ import { useState } from 'react'
 import { MoreVertical, Search, Filter, ArrowUpDown, MoreHorizontal, Plus } from 'lucide-react'
 import { microgrammaBold } from '@/lib/fonts'
 import { Header } from '@/components/admin/layout/Header'
+import { useTransactions, useTransactionSummary } from '@/hooks/useTransactions'
 
-const TABS = ['All order', 'Completed', 'Pending', 'Canceled']
-
-// TODO: replace with real payment/FASTag recharge data — check against FastagModule / recharge_transactions table
-const TRANSACTIONS = [
-  { id: '#CUST001', name: 'Ravi Kumar', date: '01-01-2025', total: 2904, method: 'UPI', status: 'Complete' },
-  { id: '#CUST002', name: 'Priya Sharma', date: '01-01-2025', total: 2904, method: 'Card', status: 'Complete' },
-  { id: '#CUST003', name: 'Arjun Reddy', date: '01-01-2025', total: 2904, method: 'UPI', status: 'Complete' },
-  { id: '#CUST004', name: 'Sneha Iyer', date: '01-01-2025', total: 2904, method: 'Netbanking', status: 'Complete' },
-  { id: '#CUST005', name: 'Vikram Singh', date: '01-01-2025', total: 2904, method: 'Card', status: 'Canceled' },
-  { id: '#CUST006', name: 'Anjali Nair', date: '01-01-2025', total: 2904, method: 'UPI', status: 'Pending' },
-]
+const TABS = ['All order', 'Complete', 'Pending', 'Failed']
 
 const STATUS_STYLE: Record<string, string> = {
-  Complete: 'text-green-600', Pending: 'text-amber-600', Canceled: 'text-red-500',
+  Complete: 'text-green-600', Pending: 'text-amber-600', Failed: 'text-red-500',
+}
+
+const STATUS_DOT: Record<string, string> = {
+  Complete: 'bg-green-500', Pending: 'bg-amber-500', Failed: 'bg-red-500',
 }
 
 export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState('All order')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const { data: summary } = useTransactionSummary()
+  const { data, isLoading, isError } = useTransactions()
+  const transactions = data?.transactions ?? []
+
+  const filtered = transactions
+    .filter((t) => activeTab === 'All order' || t.status === activeTab)
+    .filter((t) => t.name?.toLowerCase().includes(search.toLowerCase()))
+
+  const kpis = [
+    { label: 'Total Revenue', value: summary ? `₹${summary.totalRevenue.toLocaleString('en-IN')}` : '—' },
+    { label: 'Completed Transactions', value: summary?.completed ?? '—' },
+    { label: 'Pending Transactions', value: summary?.pending ?? '—' },
+    { label: 'Failed Transactions', value: summary?.failed ?? '—' },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,19 +44,13 @@ export default function TransactionsPage() {
         {/* KPI cards + Payment method */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            {[
-              { label: 'Total Revenue', value: '—', trend: 'needs backend' },
-              { label: 'Completed Transactions', value: '—', trend: 'needs backend' },
-              { label: 'Pending Transactions', value: '—', trend: 'needs backend' },
-              { label: 'Failed Transactions', value: '—', trend: 'needs backend' },
-            ].map((k) => (
+            {kpis.map((k) => (
               <div key={k.label} className="bg-white border rounded-xl p-5">
                 <div className="flex items-start justify-between">
                   <p className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-700`}>{k.label}</p>
                   <MoreVertical className="h-4 w-4 text-gray-300" />
                 </div>
                 <p className="text-2xl font-bold text-gray-800 mt-1">{k.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{k.trend}</p>
               </div>
             ))}
           </div>
@@ -90,7 +95,12 @@ export default function TransactionsPage() {
             <div className="flex items-center gap-2">
               <div className="relative hidden sm:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                <input placeholder="Search payment history" className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-48" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search payment history"
+                  className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-48"
+                />
               </div>
               <button className="p-2 rounded-lg border text-gray-500"><Filter className="h-4 w-4" /></button>
               <button className="p-2 rounded-lg border text-gray-500"><ArrowUpDown className="h-4 w-4" /></button>
@@ -112,17 +122,26 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {TRANSACTIONS.map((t, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="py-3 text-gray-700">{t.id}</td>
+                {isLoading && (
+                  <tr><td colSpan={7} className="py-6 text-center text-gray-400">Loading transactions...</td></tr>
+                )}
+                {isError && (
+                  <tr><td colSpan={7} className="py-6 text-center text-red-500">Failed to load transactions</td></tr>
+                )}
+                {!isLoading && !isError && filtered.length === 0 && (
+                  <tr><td colSpan={7} className="py-6 text-center text-gray-400">No transactions found</td></tr>
+                )}
+                {filtered.map((t) => (
+                  <tr key={t.id} className="border-b last:border-0">
+                    <td className="py-3 text-gray-700">{t.customerId?.slice(0, 8) ?? '—'}</td>
                     <td className="py-3 text-gray-700 font-medium">{t.name}</td>
-                    <td className="py-3 text-gray-500">{t.date}</td>
-                    <td className="py-3 text-gray-700">₹{t.total.toLocaleString('en-IN')}</td>
+                    <td className="py-3 text-gray-500">{new Date(t.date).toLocaleDateString('en-IN')}</td>
+                    <td className="py-3 text-gray-700">₹{Number(t.total).toLocaleString('en-IN')}</td>
                     <td className="py-3 text-gray-600">{t.method}</td>
                     <td className="py-3">
                       <span className="flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${t.status === 'Complete' ? 'bg-green-500' : t.status === 'Pending' ? 'bg-amber-500' : 'bg-red-500'}`} />
-                        <span className={STATUS_STYLE[t.status]}>{t.status}</span>
+                        <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[t.status] ?? 'bg-gray-400'}`} />
+                        <span className={STATUS_STYLE[t.status] ?? 'text-gray-500'}>{t.status}</span>
                       </span>
                     </td>
                     <td className="py-3"><button className="text-blue-500 text-xs font-medium">View Details</button></td>

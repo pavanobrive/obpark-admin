@@ -1,17 +1,26 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { MoreVertical, Search, ChevronRight, Plus, Bell, Sun, Filter } from 'lucide-react'
+import { MoreVertical, Search, ChevronRight, Plus, Filter } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { microgrammaBold } from '@/lib/fonts'
+import { useCategories } from '@/hooks/useCategories'
+import { Header } from '@/components/admin/layout/Header'
 
 interface DashboardStats {
-  totalOrders: number
   totalRevenue: number
+  totalOrders: number
   pendingOrders: number
+  canceledOrders: number
   totalUsers: number
-  recentOrders: any[]
+  totalProducts: number
+  stockProducts: number
+  outOfStockProducts: number
+  recentOrders: { id: string; total: number; status: string; createdAt: string }[]
+  salesByState: { state: string; total: number }[]
+  bestSelling: { id: string; name: string; orders: number; inStock: boolean; price: number }[]
 }
 
 function useDashboardStats() {
@@ -21,37 +30,12 @@ function useDashboardStats() {
   })
 }
 
-const WEEKLY_REPORT = [
-  { day: 'Sun', value: 16000 }, { day: 'Mon', value: 27000 }, { day: 'Tue', value: 27000 },
-  { day: 'Wed', value: 14000 }, { day: 'Thu', value: 22000 }, { day: 'Fri', value: 30000 }, { day: 'Sat', value: 30000 },
-]
-
-const TRANSACTIONS = [
-  { no: 1, id: '#6545', date: '01 Oct | 11:29 am', status: 'Paid', amount: '₹649' },
-  { no: 2, id: '#5412', date: '01 Oct | 11:29 am', status: 'Pending', amount: '₹5,570' },
-  { no: 3, id: '#6622', date: '01 Oct | 11:29 am', status: 'Paid', amount: '₹1,560' },
-  { no: 4, id: '#6462', date: '01 Oct | 11:29 am', status: 'Paid', amount: '₹2,650' },
-  { no: 5, id: '#6462', date: '01 Oct | 11:29 am', status: 'Paid', amount: '₹2,650' },
-]
-
-const BEST_SELLING = [
-  { name: 'Engine Oil Filter', orders: 104, status: 'Stock', price: '₹349.00' },
-  { name: 'Brake Pad Set', orders: 56, status: 'Stock out', price: '₹899.00' },
-  { name: 'Car Battery 12V', orders: 266, status: 'Stock', price: '₹4,999.00' },
-  { name: 'LED Headlight Bulb', orders: 506, status: 'Stock', price: '₹799.00' },
-]
-
-const COUNTRIES = [
-  { flag: 'TS', name: 'Telangana', value: '30k', change: '25.8%', up: true },
-  { flag: 'MH', name: 'Maharashtra', value: '30k', change: '15.8%', up: false },
-  { flag: 'KA', name: 'Karnataka', value: '25k', change: '35.8%', up: true },
-]
-
-const CATEGORIES = [
-  { name: 'Engine Parts' },
-  { name: 'Brakes & Suspension' },
-  { name: 'Electrical' },
-]
+function useRevenueTrend() {
+  return useQuery({
+    queryKey: ['admin', 'analytics', 'revenue-trend'],
+    queryFn: () => api.get<{ day: string; value: number }[]>('/admin/analytics/revenue-trend'),
+  })
+}
 
 const QUICK_PRODUCTS = [
   { name: 'Air Filter', price: '₹399.00' },
@@ -59,52 +43,31 @@ const QUICK_PRODUCTS = [
   { name: 'Spark Plug (Set of 4)', price: '₹699.00' },
 ]
 
-const BAR_DATA = [3, 5, 4, 6, 5, 7, 6, 8, 7, 9, 8, 7, 9, 8, 10, 9, 8, 7, 8, 9, 10, 8, 7, 6, 8, 9, 7, 8]
+const STATIC_BARS = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
 
 export default function DashboardPage() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const { data: stats, isLoading } = useDashboardStats()
+  const { data: revenueTrend, isLoading: trendLoading } = useRevenueTrend()
+  const { data: categories = [] } = useCategories()
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['admin', 'products', 'top'],
     queryFn: () => api.get<{ products: any[] }>('/admin/products?limit=4'),
   })
 
+  const chartData = revenueTrend ?? []
+
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* Top Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-        <h1 className={`${microgrammaBold.className} text-[24px] font-bold text-gray-800`}>Dashboard</h1>
-        <div className="flex items-center gap-4 flex-1 max-w-md mx-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              placeholder="Search data, users, or reports"
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="w-9 h-9 rounded-full bg-gray-50 border flex items-center justify-center">
-            <Search className="h-4 w-4 text-gray-500" />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-gray-50 border flex items-center justify-center">
-            <Bell className="h-4 w-4 text-gray-500" />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-gray-50 border flex items-center justify-center">
-            <Sun className="h-4 w-4 text-gray-500" />
-          </button>
-          <div className="w-9 h-9 rounded-full bg-gray-300" />
-        </div>
-      </div>
+      <Header title="Dashboard" onMenuClick={() => setDrawerOpen(true)} />
 
       <div className="p-6 space-y-6">
 
         {/* KPI Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
 
-          {/* Total Sales */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-start justify-between">
               <div>
                 <p className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-700`}>Total Sales</p>
@@ -116,16 +79,13 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-gray-800">
                 ₹{isLoading ? '—' : (stats?.totalRevenue ?? 0).toLocaleString('en-IN')}
               </p>
-              <span className="text-xs text-green-500 font-medium">Sales ↑ 10.4%</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">Previous 7days <span className="text-blue-500">(₹235)</span></p>
             <div className="mt-4 flex justify-end">
               <button className="text-xs px-4 py-1.5 rounded-full border border-blue-200 text-blue-500 hover:bg-gray-50">Details</button>
             </div>
           </div>
 
-          {/* Total Orders */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-start justify-between">
               <div>
                 <p className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-700`}>Total Orders</p>
@@ -137,16 +97,13 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold text-gray-800">
                 {isLoading ? '—' : (stats?.totalOrders ?? 0).toLocaleString()}
               </p>
-              <span className="text-xs text-green-500 font-medium">order ↑ 14.4%</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">Previous 7days <span className="text-blue-500">(7.6k)</span></p>
             <div className="mt-4 flex justify-end">
               <button className="text-xs px-4 py-1.5 rounded-full border border-blue-200 text-blue-500 hover:bg-gray-50">Details</button>
             </div>
           </div>
 
-          {/* Pending & Cancelled */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-start justify-between">
               <div>
                 <p className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-700`}>Pending & Canceled</p>
@@ -158,12 +115,10 @@ export default function DashboardPage() {
               <div>
                 <p className={`${microgrammaBold.className} text-xs text-gray-400`}>Pending</p>
                 <p className="text-xl font-bold text-gray-800">{isLoading ? '—' : stats?.pendingOrders ?? 0}</p>
-                <p className="text-xs text-gray-400">user 204</p>
               </div>
               <div className="border-l pl-4">
                 <p className={`${microgrammaBold.className} text-xs text-gray-400`}>Canceled</p>
-                <p className="text-xl font-bold text-red-500">94</p>
-                <p className="text-xs text-red-400">↓ 14.4%</p>
+                <p className="text-xl font-bold text-red-500">{isLoading ? '—' : stats?.canceledOrders ?? 0}</p>
               </div>
             </div>
             <div className="mt-4 flex justify-end">
@@ -173,31 +128,28 @@ export default function DashboardPage() {
         </div>
 
         {/* Middle Row: Chart + Live Users */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
 
-          {/* Weekly Report Chart */}
-          <div className="lg:col-span-2 bg-white border rounded-xl p-6">
+          <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Report for this week</h2>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1 text-xs">
                   <button className={'' + microgrammaBold.className + ' px-3 py-1.5 rounded-full bg-green-50 text-green-600 border border-green-200'}>This week</button>
-                  <button className={'' + microgrammaBold.className + ' px-3 py-1.5 rounded-full text-gray-500 hover:bg-gray-50 border border-gray-200'}>Last week</button>
                 </div>
                 <MoreVertical className="h-4 w-4 text-gray-300" />
               </div>
             </div>
 
-            {/* Stats row */}
-            <div className="flex gap-6 mb-4 border-b pb-4">
+            <div className="flex gap-6 mb-4 border-b pb-4 overflow-x-auto">
               {[
-                { value: '52k', label: 'Customers' },
-                { value: '3.5k', label: 'Total Products' },
-                { value: '2.5k', label: 'Stock Products' },
-                { value: '0.5k', label: 'Out of Stock' },
-                { value: '₹' + ((stats?.totalRevenue ?? 250000) / 1000).toFixed(0) + 'k', label: 'Revenue' },
+                { value: isLoading ? '—' : (stats?.totalUsers ?? 0).toLocaleString(), label: 'Customers' },
+                { value: isLoading ? '—' : (stats?.totalProducts ?? 0).toLocaleString(), label: 'Total Products' },
+                { value: isLoading ? '—' : (stats?.stockProducts ?? 0).toLocaleString(), label: 'Stock Products' },
+                { value: isLoading ? '—' : (stats?.outOfStockProducts ?? 0).toLocaleString(), label: 'Out of Stock' },
+                { value: isLoading ? '—' : `₹${((stats?.totalRevenue ?? 0) / 1000).toFixed(0)}k`, label: 'Revenue' },
               ].map((s, i) => (
-                <div key={i} className={`${i === 0 ? 'border-b-2 border-green-500 pb-1' : ''}`}>
+                <div key={i} className={`shrink-0 ${i === 0 ? 'border-b-2 border-green-500 pb-1' : ''}`}>
                   <p className="text-[16px] font-bold text-gray-800">{s.value}</p>
                   <p className="text-xs text-gray-400">{s.label}</p>
                 </div>
@@ -205,7 +157,7 @@ export default function DashboardPage() {
             </div>
 
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={WEEKLY_REPORT}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#A2F1DF" stopOpacity={0.6} />
@@ -213,30 +165,27 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={11} />
-                <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(v) => `${v / 1000}0k`} />
-                <Tooltip />
+                <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(v) => `${v / 1000}k`} />
+                <Tooltip formatter={(v: any) => `₹${Number(v).toLocaleString('en-IN')}`} />
                 <Area type="monotone" dataKey="value" stroke="#22c55e" fill="url(#rev)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
+            {!trendLoading && chartData.every((d) => d.value === 0) && (
+              <p className="text-xs text-gray-400 text-center mt-2">No paid orders in the last 7 days yet</p>
+            )}
           </div>
 
-          {/* Live Users + Sales by State */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-start justify-between">
-              <p className="text-xs text-purple-600 font-medium">Users in last 30 minutes</p>
+              <p className="text-xs text-purple-600 font-medium">Live user tracking</p>
               <MoreVertical className="h-4 w-4 text-gray-300" />
             </div>
-            <p className="text-3xl font-bold text-gray-800 mt-1">21.5K</p>
-            <p className="text-xs text-gray-400 mt-3 mb-2">Users per minute</p>
+            <p className="text-3xl font-bold text-gray-300 mt-1">—</p>
+            <p className="text-xs text-gray-400 mt-3 mb-2">Not enabled yet</p>
 
-            {/* Bar chart placeholder */}
             <div className="flex items-end gap-0.5 h-12 mb-4">
-              {BAR_DATA.map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-sm"
-                  style={{ height: `${h * 10}%`, backgroundColor: '#22c55e', opacity: 0.7 + (i % 3) * 0.1 }}
-                />
+              {STATIC_BARS.map((h, i) => (
+                <div key={i} className="flex-1 rounded-sm bg-gray-200" style={{ height: `${h * 10}%` }} />
               ))}
             </div>
 
@@ -246,32 +195,36 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {COUNTRIES.map((c) => (
-                <div key={c.name} className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">{c.flag}</span>
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-gray-700">{c.value}</p>
-                    <p className="text-[10px] text-gray-400">{c.name}</p>
-                    <div className="h-1 bg-blue-500 rounded mt-1" style={{ width: '60%' }} />
-                  </div>
-                  <span className={`text-xs font-medium ${c.up ? 'text-green-500' : 'text-red-500'}`}>
-                    {c.up ? '↑' : '↓'} {c.change}
-                  </span>
-                </div>
-              ))}
+              {isLoading ? (
+                <p className="text-xs text-gray-400">Loading...</p>
+              ) : stats?.salesByState && stats.salesByState.length > 0 ? (
+                stats.salesByState.map((s) => {
+                  const max = stats.salesByState[0].total || 1
+                  const widthPct = Math.max(10, Math.round((s.total / max) * 100))
+                  return (
+                    <div key={s.state} className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                        {s.state.slice(0, 2).toUpperCase()}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-700">₹{s.total.toLocaleString('en-IN')}</p>
+                        <p className="text-[10px] text-gray-400">{s.state}</p>
+                        <div className="h-1 bg-blue-500 rounded mt-1" style={{ width: `${widthPct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <p className="text-xs text-gray-400">No state-wise sales yet</p>
+              )}
             </div>
-
-            <button className="w-full mt-4 py-2 rounded-full border border-blue-200 text-xs text-blue-500 hover:bg-gray-50">
-              View Insight
-            </button>
           </div>
         </div>
 
         {/* Bottom Row: Transaction + Top Products */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Transaction Table */}
-          <div className="lg:col-span-2 bg-white border rounded-xl p-6">
+          <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Transaction</h2>
               <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium" style={{ backgroundColor: '#074139' }}>
@@ -295,18 +248,18 @@ export default function DashboardPage() {
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
                       {[...Array(5)].map((_, j) => (
-                        <td key={j} className="py-2">
-                          <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                        </td>
+                        <td key={j} className="py-2"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td>
                       ))}
                     </tr>
                   ))
                 ) : stats?.recentOrders?.length ? (
-                  stats.recentOrders.map((order: any, i: number) => (
+                  stats.recentOrders.map((order, i) => (
                     <tr key={order.id} className="border-b last:border-0">
                       <td className="py-3 text-gray-500">{i + 1}.</td>
                       <td className="py-3 text-gray-700">#{order.id.slice(-4)}</td>
-                      <td className="py-3 text-gray-500">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} | {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td className="py-3 text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} | {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </td>
                       <td className="py-3">
                         <span className="flex items-center gap-1.5">
                           <span className={`h-2 w-2 rounded-full ${order.status === 'CONFIRMED' || order.status === 'DELIVERED' ? 'bg-green-500' : order.status === 'PENDING' ? 'bg-yellow-500' : 'bg-red-500'}`} />
@@ -317,20 +270,7 @@ export default function DashboardPage() {
                     </tr>
                   ))
                 ) : (
-                  TRANSACTIONS.map((t) => (
-                    <tr key={t.no} className="border-b last:border-0">
-                      <td className="py-3 text-gray-500">{t.no}.</td>
-                      <td className="py-3 text-gray-700">{t.id}</td>
-                      <td className="py-3 text-gray-500">{t.date}</td>
-                      <td className="py-3">
-                        <span className="flex items-center gap-1.5">
-                          <span className={`h-2 w-2 rounded-full ${t.status === 'Paid' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                          <span className="text-xs">{t.status}</span>
-                        </span>
-                      </td>
-                      <td className="py-3 text-right font-medium">{t.amount}</td>
-                    </tr>
-                  ))
+                  <tr><td colSpan={5} className="py-6 text-center text-gray-400">No orders yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -341,8 +281,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Top Products */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-center justify-between mb-3">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Top Products</h2>
               <span className="text-xs text-blue-500 cursor-pointer">All product</span>
@@ -366,16 +305,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                ['Engine Oil Filter', 'Brake Pad Set', 'Car Battery 12V', 'LED Headlight Bulb'].map((name, i) => (
-                  <div key={i} className="flex items-center gap-3 border-b pb-3 last:border-0">
-                    <div className="h-10 w-10 rounded-lg bg-gray-100 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">{name}</p>
-                      <p className="text-[10px] text-gray-400">Item: #FXZ-4567</p>
-                    </div>
-                    <p className="text-xs font-bold">₹{[349, 899, 4999, 799][i]}</p>
-                  </div>
-                ))
+                <p className="text-xs text-gray-400 py-4 text-center">No products yet</p>
               )}
             </div>
           </div>
@@ -384,8 +314,7 @@ export default function DashboardPage() {
         {/* Last Row: Best Selling + Add New Product */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Best Selling Product */}
-          <div className="lg:col-span-2 bg-white border rounded-xl p-6">
+          <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Best selling product</h2>
               <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium" style={{ backgroundColor: '#074139' }}>
@@ -404,24 +333,30 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {BEST_SELLING.map((p, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />
-                        <span className="text-xs font-medium text-gray-800">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-xs text-gray-600">{p.orders}</td>
-                    <td className="px-3 py-3">
-                      <span className="flex items-center gap-1.5 text-xs">
-                        <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'Stock' ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span className={p.status === 'Stock' ? 'text-green-600' : 'text-red-500'}>{p.status}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-xs font-bold text-gray-800">{p.price}</td>
-                  </tr>
-                ))}
+                {isLoading ? (
+                  <tr><td colSpan={4} className="py-6 text-center text-gray-400">Loading...</td></tr>
+                ) : stats?.bestSelling?.length ? (
+                  stats.bestSelling.map((p) => (
+                    <tr key={p.id} className="border-b last:border-0">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />
+                          <span className="text-xs font-medium text-gray-800">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-xs text-gray-600">{p.orders}</td>
+                      <td className="px-3 py-3">
+                        <span className="flex items-center gap-1.5 text-xs">
+                          <span className={`h-1.5 w-1.5 rounded-full ${p.inStock ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={p.inStock ? 'text-green-600' : 'text-red-500'}>{p.inStock ? 'Stock' : 'Stock out'}</span>
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-xs font-bold text-gray-800">₹{p.price.toLocaleString('en-IN')}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={4} className="py-6 text-center text-gray-400">No products yet</td></tr>
+                )}
               </tbody>
             </table>
             </div>
@@ -431,8 +366,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Add New Product */}
-          <div className="bg-white border rounded-xl p-5">
+          <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-center justify-between mb-1">
               <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Add New Product</h2>
               <button className="text-xs text-blue-500 flex items-center gap-1">
@@ -441,8 +375,8 @@ export default function DashboardPage() {
             </div>
             <p className="text-xs text-gray-400 mb-3">Categories</p>
             <div className="space-y-2 mb-4">
-              {CATEGORIES.map((cat) => (
-                <div key={cat.name} className="flex items-center justify-between p-2.5 rounded-lg border hover:bg-gray-50 cursor-pointer">
+              {categories.slice(0, 3).map((cat) => (
+                <div key={cat.id} className="flex items-center justify-between p-2.5 rounded-lg border hover:bg-gray-50 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded bg-gray-100" />
                     <span className="text-xs font-medium">{cat.name}</span>
@@ -450,6 +384,7 @@ export default function DashboardPage() {
                   <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
                 </div>
               ))}
+              {categories.length === 0 && <p className="text-xs text-gray-400">No categories yet</p>}
             </div>
             <button className="text-xs text-blue-500 w-full text-center mb-4">See more</button>
 

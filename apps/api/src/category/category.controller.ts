@@ -1,26 +1,26 @@
 import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common'
 import { CategoryService } from './category.service'
 
-@Controller('categories')
+@Controller()
 export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
-  @Get()
+  @Get('categories')
   list() {
     return this.categoryService.getCategories()
   }
 
-  @Get(':slug')
+  @Get('categories/:slug')
   getBySlug(@Param('slug') slug: string) {
     return this.categoryService.getCategoryBySlug(slug)
   }
 
-  @Post()
-  create(@Body() dto: { name: string; slug: string; description?: string }) {
+  @Post('admin/categories')
+  create(@Body() dto: { name: string; slug: string; description?: string; imageUrl?: string }) {
     return this.categoryService.createCategory(dto)
   }
 
-  @Delete(':id')
+  @Delete('admin/categories/:id')
   remove(@Param('id') id: string) {
     return this.categoryService.deleteCategory(id)
   }

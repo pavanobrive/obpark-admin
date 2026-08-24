@@ -1,37 +1,124 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, MoreVertical, Search, Filter, ArrowUpDown, MoreHorizontal, Pencil, Trash2, ChevronRight } from 'lucide-react'
+import { Plus, MoreVertical, Search, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'
 import { microgrammaBold } from '@/lib/fonts'
 import { Header } from '@/components/admin/layout/Header'
-
-const CATEGORY_TILES = [
-  { name: 'Engine Parts', icon: '🔧' },
-  { name: 'Brakes & Suspension', icon: '🛞' },
-  { name: 'Electrical', icon: '🔋' },
-  { name: 'Body & Exterior', icon: '🚗' },
-  { name: 'Interior', icon: '💺' },
-  { name: 'Lighting', icon: '💡' },
-  { name: 'Tyres', icon: '🛞' },
-  { name: 'Accessories', icon: '🧰' },
-]
+import { useCategories, useCreateCategory, useDeleteCategory } from '@/hooks/useCategories'
 
 const TABS = ['All Product', 'Featured Products', 'On Sale', 'Out of Stock']
 
-// TODO: replace with GET /categories + per-category product count once that query exists
-const PRODUCTS = [
-  { name: 'Engine Oil Filter', date: '01-01-2025', orders: 25 },
-  { name: 'Brake Pad Set', date: '01-01-2025', orders: 20 },
-  { name: 'Car Battery 12V', date: '01-01-2025', orders: 35 },
-  { name: 'LED Headlight Bulb', date: '01-01-2025', orders: 40 },
-  { name: 'Air Filter', date: '01-01-2025', orders: 45 },
-  { name: 'Wiper Blade Set', date: '01-01-2025', orders: 55 },
-  { name: 'Spark Plug (Set of 4)', date: '01-01-2025', orders: 20 },
-]
+function slugify(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
+function AddCategoryModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const createCategory = useCreateCategory()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    try {
+      await createCategory.mutateAsync({
+        name: name.trim(),
+        slug: slugify(name),
+        description: description.trim() || undefined,
+      })
+      onClose()
+    } catch (err) {
+      // error surfaced below via createCategory.error
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-800`}>
+            Add Category
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Category Name</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Car Essentials"
+              className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:border-[#074139]"
+            />
+            {name && (
+              <p className="text-[11px] text-gray-400 mt-1">Slug: {slugify(name)}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Description (optional)</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:border-[#074139] resize-none"
+            />
+          </div>
+
+          {createCategory.isError && (
+            <p className="text-xs text-red-500">
+              {(createCategory.error as Error)?.message || 'Failed to create category'}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 border"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim() || createCategory.isPending}
+              className={`${microgrammaBold.className} px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-50`}
+              style={{ backgroundColor: '#074139' }}
+            >
+              {createCategory.isPending ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('All Product')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const { data: categories = [], isLoading, isError } = useCategories()
+  const deleteCategory = useDeleteCategory()
+
+  const filtered = categories.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleDelete = (id: string, name: string) => {
+    if (!confirm(`Delete category "${name}"?`)) return
+    deleteCategory.mutate(id)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,7 +128,11 @@ export default function CategoriesPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h2 className={`${microgrammaBold.className} font-semibold text-[22px] text-gray-800`}>Discover</h2>
           <div className="flex gap-2">
-            <button className={`${microgrammaBold.className} flex items-center gap-1.5 px-4 py-2 rounded-lg text-[16px] text-white font-medium`} style={{ backgroundColor: '#074139' }}>
+            <button
+              onClick={() => setModalOpen(true)}
+              className={`${microgrammaBold.className} flex items-center gap-1.5 px-4 py-2 rounded-lg text-[16px] text-white font-medium`}
+              style={{ backgroundColor: '#074139' }}
+            >
               <Plus className="h-4 w-4" /> Add Category
             </button>
             <button className={`${microgrammaBold.className} flex items-center gap-1.5 px-4 py-2 rounded-lg text-[16px] border font-medium text-gray-600`}>
@@ -50,16 +141,34 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* Category tiles */}
+        {/* Category tiles - real data */}
         <div className="overflow-x-auto">
-          <div className="flex gap-4 min-w-[700px]">
-            {CATEGORY_TILES.map((cat) => (
-              <div key={cat.name} className="bg-white border rounded-xl p-4 flex flex-col items-center gap-2 w-32 shrink-0 hover:shadow-sm cursor-pointer">
-                <div className="w-14 h-14 rounded-lg bg-gray-50 flex items-center justify-center text-2xl">{cat.icon}</div>
-                <p className={`${microgrammaBold.className} text-[14px] font-medium text-gray-700 text-center`}>{cat.name}</p>
-              </div>
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-sm text-gray-400">Loading categories...</p>
+          ) : isError ? (
+            <p className="text-sm text-red-500">Failed to load categories</p>
+          ) : categories.length === 0 ? (
+            <p className="text-sm text-gray-400">No categories yet — click "Add Category" to create one.</p>
+          ) : (
+            <div className="flex gap-4 min-w-[700px]">
+              {categories.map((cat) => (
+                <div key={cat.id} className="relative group bg-white border rounded-xl p-4 flex flex-col items-center gap-2 w-32 shrink-0 hover:shadow-sm">
+                  <button
+                    onClick={() => handleDelete(cat.id, cat.name)}
+                    className="absolute top-1.5 right-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="w-14 h-14 rounded-lg bg-gray-50 flex items-center justify-center text-2xl">
+                    🏷️
+                  </div>
+                  <p className={`${microgrammaBold.className} text-[14px] font-medium text-gray-700 text-center`}>
+                    {cat.name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Filter tabs + table */}
@@ -75,17 +184,22 @@ export default function CategoriesPage() {
                   }`}
                   style={activeTab === tab ? { color: '#074139' } : {}}
                 >
-                  {tab === 'All Product' ? `All Product (${PRODUCTS.length})` : tab}
+                  {tab === 'All Product' ? `All Product (${categories.length})` : tab}
                 </button>
               ))}
             </div>
             <div className="flex items-center gap-2">
               <div className="relative hidden sm:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                <input placeholder="Search your product" className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-44" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search categories"
+                  className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-44"
+                />
               </div>
               <button className="p-2 rounded-lg border text-gray-500"><Filter className="h-4 w-4" /></button>
-              <button className="p-2 rounded-lg border text-gray-500"><Plus className="h-4 w-4" /></button>
+              <button onClick={() => setModalOpen(true)} className="p-2 rounded-lg border text-gray-500"><Plus className="h-4 w-4" /></button>
               <button className="p-2 rounded-lg border text-gray-500"><MoreHorizontal className="h-4 w-4" /></button>
             </div>
           </div>
@@ -95,57 +209,51 @@ export default function CategoriesPage() {
               <thead>
                 <tr className="text-left text-xs text-gray-500 bg-green-50">
                   <th className="px-3 py-2.5 font-medium rounded-l-lg">No.</th>
-                  <th className="px-3 py-2.5 font-medium">Product</th>
-                  <th className="px-3 py-2.5 font-medium">Created Date</th>
-                  <th className="px-3 py-2.5 font-medium">Order</th>
+                  <th className="px-3 py-2.5 font-medium">Category</th>
+                  <th className="px-3 py-2.5 font-medium">Slug</th>
+                  <th className="px-3 py-2.5 font-medium">Description</th>
                   <th className="px-3 py-2.5 font-medium rounded-r-lg">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {PRODUCTS.map((p, i) => (
-                  <tr key={i} className="border-b last:border-0">
+                {filtered.map((c, i) => (
+                  <tr key={c.id} className="border-b last:border-0">
                     <td className="px-3 py-3 text-gray-500">{i + 1}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />
-                        <span className="text-gray-700 font-medium">{p.name}</span>
+                        <span className="text-gray-700 font-medium">{c.name}</span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-gray-500">{p.date}</td>
-                    <td className="px-3 py-3 text-gray-700">{p.orders}</td>
+                    <td className="px-3 py-3 text-gray-500">{c.slug}</td>
+                    <td className="px-3 py-3 text-gray-500">{c.description || '—'}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
                         <button className="text-gray-400 hover:text-gray-600"><Pencil className="h-4 w-4" /></button>
-                        <button className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                        <button
+                          onClick={() => handleDelete(c.id, c.name)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
+                {filtered.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-6 text-center text-gray-400">
+                      No categories found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
-
-          <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-            <button 
-            className={`${microgrammaBold.className} text-[16px] font-bold text-[#074139] bg-white rounded-[5px] shadow-sm px-4 py-2 leading-none`}
-            >← Previous</button>
-            <div className="flex gap-1 flex-wrap">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  className={`w-8 h-8 rounded-lg text-sm ${n === 1 ? 'text-white' : 'text-gray-500 hover:bg-gray-50'}`}
-                  style={n === 1 ? { backgroundColor: '#074139' } : {}}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <button 
-            className={`${microgrammaBold.className} text-[16px] font-bold text-[#074139] bg-white rounded-[5px] shadow-sm px-4 py-2 leading-none`}
-            >Next →</button>
-          </div>
         </div>
       </div>
+
+      {modalOpen && <AddCategoryModal onClose={() => setModalOpen(false)} />}
     </div>
   )
 }

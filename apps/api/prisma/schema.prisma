@@ -119,6 +119,7 @@ model Product {
   orderItems    OrderItem[]
   category      Category    @relation(fields: [categoryId], references: [id])
   variants      Variant[]
+  reviews Review[]
 
   @@index([slug])
   @@index([categoryId])
@@ -251,6 +252,27 @@ model Coupon {
   createdAt     DateTime     @default(now())
 
   @@index([code])
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  productId    String
+  customerName String
+  rating       Int
+  comment      String
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([status])
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  PENDING
+  REJECTED
 }
 
 enum Role {

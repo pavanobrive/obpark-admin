@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, Trash2 } from 'lucide-react'
+import {  Trash2 } from 'lucide-react'
 import type { Customer } from './types'
 import { microgrammaBold } from '@/lib/fonts'
 
@@ -48,8 +48,8 @@ export function CustomerTable({ customers, isLoading, selectedId, onSelect }: Cu
                   <td className="py-3 text-gray-700">{c.id}</td>
                   <td className="py-3 text-gray-700 font-medium">{c.name}</td>
                   <td className="py-3 text-gray-500">{c.phone}</td>
-                  <td className="py-3 text-gray-700">{c.orders}</td>
-                  <td className="py-3 text-gray-700">₹{c.spend.toLocaleString('en-IN')}</td>
+                  <td className="py-3 text-gray-700">{c.orderCount}</td>
+<td className="py-3 text-gray-700">₹{c.totalSpend.toLocaleString('en-IN')}</td>
                   <td className="py-3">
                     <span className="flex items-center gap-1.5">
                       <span className={`h-1.5 w-1.5 rounded-full ${c.status === 'Active' ? 'bg-green-500' : c.status === 'VIP' ? 'bg-amber-500' : 'bg-red-500'}`} />
@@ -58,7 +58,7 @@ export function CustomerTable({ customers, isLoading, selectedId, onSelect }: Cu
                   </td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
-                      <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-gray-600"><FileText className="h-4 w-4" /></button>
+                      <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-gray-600"></button>
                       <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>

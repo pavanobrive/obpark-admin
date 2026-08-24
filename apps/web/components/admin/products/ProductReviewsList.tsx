@@ -1,7 +1,7 @@
 'use client'
 
 import { Star, Check, X, Trash2 } from 'lucide-react'
-import { useProductReviews } from '@/hooks/useProductReviews'
+import { useProductReviews, useApproveReview, useRejectReview, useDeleteReview } from '@/hooks/useProductReviews'
 
 const STATUS_STYLE: Record<string, string> = {
   Published: 'bg-green-100 text-green-600',
@@ -10,14 +10,13 @@ const STATUS_STYLE: Record<string, string> = {
 }
 
 export function ProductReviewsList() {
-  const { data: reviews, isLoading } = useProductReviews()
+  const { data: reviews = [], isLoading } = useProductReviews()
+  const approveReview = useApproveReview()
+  const rejectReview = useRejectReview()
+  const deleteReview = useDeleteReview()
 
   return (
     <div className="space-y-6">
-      <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm px-4 py-2.5 rounded-lg">
-        No review model exists in the backend schema yet — this list is placeholder data. Real version needs a Review table plus moderation endpoints.
-      </div>
-
       <div className="bg-white border rounded-xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Customer Reviews</h3>
 
@@ -45,9 +44,30 @@ export function ProductReviewsList() {
                 <div className="flex items-center gap-3">
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_STYLE[r.status]}`}>{r.status}</span>
                   <div className="flex items-center gap-1.5">
-                    <button aria-label="Approve review" className="text-gray-400 hover:text-green-600"><Check className="h-4 w-4" /></button>
-                    <button aria-label="Reject review" className="text-gray-400 hover:text-red-500"><X className="h-4 w-4" /></button>
-                    <button aria-label="Delete review" className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                    <button
+                      aria-label="Approve review"
+                      onClick={() => approveReview.mutate(r.id)}
+                      disabled={approveReview.isPending || r.status === 'Published'}
+                      className="text-gray-400 hover:text-green-600 disabled:opacity-40"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      aria-label="Reject review"
+                      onClick={() => rejectReview.mutate(r.id)}
+                      disabled={rejectReview.isPending || r.status === 'Rejected'}
+                      className="text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <button
+                      aria-label="Delete review"
+                      onClick={() => { if (confirm('Delete this review?')) deleteReview.mutate(r.id) }}
+                      disabled={deleteReview.isPending}
+                      className="text-gray-400 hover:text-red-500 disabled:opacity-40"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>

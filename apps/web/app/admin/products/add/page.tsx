@@ -1,8 +1,13 @@
 'use client'
 
-import { AddProductForm } from '@/components/admin/products/AddProductForm'
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { Header } from '@/components/admin/layout/Header'
+
+const AddProductForm = dynamic(
+  () => import('@/components/admin/products/AddProductForm').then((mod) => mod.AddProductForm),
+  { ssr: false }
+)
 
 export default function AddProductPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)

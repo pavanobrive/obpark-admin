@@ -2,7 +2,7 @@ export interface Customer {
   id: string
   name: string
   phone: string
-  orders: number
-  spend: number
+   orderCount: number
+  totalSpend: number
   status: 'Active' | 'Inactive' | 'VIP'
 }

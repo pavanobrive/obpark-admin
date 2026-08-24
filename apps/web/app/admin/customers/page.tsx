@@ -34,10 +34,22 @@ export default function CustomersPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-1 space-y-4">
             {[
-              { label: 'Total Customers', value: '—', trend: 'needs backend' },
-              { label: 'New Customers', value: '—', trend: 'needs backend' },
-              { label: 'Visitor', value: '—', trend: 'needs backend' },
-            ].map((k) => (
+  {
+    label: 'Total Customers',
+    value: customers?.length ?? 0,
+    trend: 'Total registered customers',
+  },
+  {
+    label: 'New Customers',
+    value: customers?.filter((c) => c.status === 'Active').length ?? 0,
+    trend: 'Active customers',
+  },
+  {
+    label: 'Visitor',
+    value: 0,
+    trend: 'Visitor tracking not connected',
+  },
+].map((k) => (
               <div key={k.label} className="bg-white border rounded-xl p-5">
                 <div className="flex items-start justify-between">
                   <p className={`${microgrammaBold.className} text-[18px] font-semibold text-gray-700`}>{k.label}</p>
