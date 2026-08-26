@@ -100,7 +100,7 @@ export class AdminService {
     return { products, total }
   }
 
-    async createProduct(dto: {
+      async createProduct(dto: {
     name: string
     slug: string
     description?: string
@@ -108,6 +108,7 @@ export class AdminService {
     sku: string
     stock: number
     categoryId: string
+    images?: string[]
   }) {
     return this.prisma.product.create({
       data: {
@@ -118,7 +119,7 @@ export class AdminService {
         sku: dto.sku,
         stock: dto.stock,
         categoryId: dto.categoryId,
-        images: [],
+        images: dto.images ?? [],
         compatibility: [],
       },
       include: { category: { select: { id: true, name: true } } },

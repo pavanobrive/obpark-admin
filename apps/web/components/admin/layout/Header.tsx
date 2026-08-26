@@ -95,10 +95,10 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         </button>
         <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200">
   <Image
-    src="/favicon.svg"
+    src="/ObriveLogo.png"
     alt="User"
-    width={40}
-    height={40}
+    width={35}
+    height={35}
     className="w-full h-full object-cover"
   />
 </div>

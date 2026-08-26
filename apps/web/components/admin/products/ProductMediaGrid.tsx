@@ -1,30 +1,33 @@
 'use client'
 
-import { Upload, Trash2, Search } from 'lucide-react'
+import { useState } from 'react'
+import { Search, ImageOff } from 'lucide-react'
 import { useAdminProducts } from '@/hooks/useAdminProducts'
-
 
 export function ProductMediaGrid() {
   const { data, isLoading } = useAdminProducts()
+  const [search, setSearch] = useState('')
+
+  const allImages = (data?.products ?? [])
+    .filter((p: any) => p.images && p.images.length > 0)
+    .flatMap((p: any) => p.images.map((url: string, i: number) => ({
+      url,
+      productName: p.name,
+      productId: p.id,
+      key: `${p.id}-${i}`,
+    })))
+    .filter((img) => img.productName.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-6">
-      <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm px-4 py-2.5 rounded-lg">
-        No dedicated media library exists in the backend yet — showing product thumbnails as a stand-in. Real version needs an upload endpoint and asset table.
-      </div>
-
-
       <div className="bg-white border rounded-xl p-6 shadow-md">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h3 className="font-semibold text-gray-800">Product Images</h3>
           <div className="flex items-center gap-2">
             <div className="relative hidden sm:block">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-              <input placeholder="Search media" className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-44" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by product" className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-44" />
             </div>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm text-white font-medium" style={{ backgroundColor: '#074139' }}>
-              <Upload className="h-4 w-4" /> Upload
-            </button>
           </div>
         </div>
 
@@ -32,23 +35,24 @@ export function ProductMediaGrid() {
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => <div key={i} className="aspect-square bg-gray-100 rounded-lg animate-pulse" />)}
           </div>
-        ) : !data?.products?.length ? (
-          <p className="text-sm text-gray-400 text-center py-10">No product images yet</p>
+        ) : allImages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <ImageOff className="h-8 w-8 mb-2" />
+            <p className="text-sm">No product images yet</p>
+            <p className="text-xs mt-1">Upload images from the Add Product page</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-            {data.products.map((p) => (
-              <div key={p.id} className="group relative aspect-square rounded-lg bg-gray-100 overflow-hidden">
-                <div className="absolute inset-0 flex items-end p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-white text-[10px] truncate">{p.name}</p>
-                </div>
-                <button
-                  aria-label={`Remove image for ${p.name}`}
-                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
+            {allImages.map((img) => {
+              return (
+                <a key={img.key} href={img.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square rounded-lg bg-gray-100 overflow-hidden block">
+                  <img src={img.url} alt={img.productName} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 flex items-end p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-white text-[10px] truncate">{img.productName}</p>
+                  </div>
+                </a>
+              )
+            })}
           </div>
         )}
       </div>

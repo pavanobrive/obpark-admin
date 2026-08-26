@@ -1,7 +1,12 @@
-import { Controller, Get, Post, Delete, Query, Body, Param } from '@nestjs/common'
+import { Controller, Get, Post, Delete, Query, Body, Param, UseGuards } from '@nestjs/common'
 import { AdminService } from './admin.service'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
 
 @Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
@@ -24,6 +29,7 @@ export class AdminController {
     sku: string
     stock: number
     categoryId: string
+    images?: string[]
   }) {
     return this.adminService.createProduct(dto)
   }

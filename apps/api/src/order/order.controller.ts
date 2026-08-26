@@ -1,7 +1,12 @@
-import { Controller, Get, Patch, Query, Param, Body } from '@nestjs/common'
+import { Controller, Get, Patch, Query, Param, Body, UseGuards } from '@nestjs/common'
 import { OrderService } from './order.service'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
 
 @Controller('admin/orders')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class OrderController {
   constructor(private orderService: OrderService) {}
 

@@ -9,6 +9,7 @@ export interface CreateProductPayload {
   sku: string
   stock: number
   categoryId: string
+  images: string[]
 }
 
 export function useCreateProduct() {

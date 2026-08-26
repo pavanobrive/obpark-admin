@@ -10,12 +10,17 @@ import { TransactionModule } from './transaction/transaction.module'
 import { AdminModule } from './admin/admin.module'
 import { OrderModule } from './order/order.module'
 import { ReviewModule } from './review/review.module'
-
+import { MediaModule } from './media/media.module'
+import { ProfileModule } from './profile/profile.module'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    AuthModule,
+    ProfileModule,
+    MediaModule,
     OrderModule,
     AdminModule,
     CategoryModule,

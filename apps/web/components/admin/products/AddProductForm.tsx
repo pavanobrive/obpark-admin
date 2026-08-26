@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Save, Upload, Plus, Wand2, Pencil, RefreshCw, ChevronDown } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Search, Save, Upload, Plus, Wand2, Pencil, RefreshCw, ChevronDown, X, Loader2 } from 'lucide-react'
 import { useCreateProduct } from '@/hooks/useCreateProduct'
 import { useCategories } from '@/hooks/useCategories'
+import { api } from '@/lib/api'
 import { microgrammaBold } from '@/lib/fonts'
 
 const COLORS = ['#C7E8D4', '#F4C4C4', '#C4CCD4', '#EDE1B0', '#3A3A3A']
@@ -12,6 +13,10 @@ export function AddProductForm() {
   const [form, setForm] = useState({ name: '', description: '', price: '', discountedPrice: '', stock: '', categoryId: '' })
   const [unlimited, setUnlimited] = useState(true)
   const [selectedColor, setSelectedColor] = useState(0)
+  const [images, setImages] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const createProduct = useCreateProduct()
   const { data: categories = [] } = useCategories()
 
@@ -20,6 +25,38 @@ export function AddProductForm() {
     : null
 
   const canPublish = form.name.trim() !== '' && form.price !== '' && form.categoryId !== ''
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    setUploadError('')
+    setUploading(true)
+
+    try {
+      const uploaded: string[] = []
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/admin/media/upload`, {
+          method: 'POST',
+          body: formData,
+        })
+        if (!res.ok) throw new Error('Upload failed')
+        const data = await res.json()
+        uploaded.push(data.url)
+      }
+      setImages((prev) => [...prev, ...uploaded])
+    } catch {
+      setUploadError('Failed to upload one or more images. Try again.')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((i) => i !== url))
+  }
 
   const handlePublish = () => {
     if (!canPublish) return
@@ -31,6 +68,7 @@ export function AddProductForm() {
       sku: `SKU-${Date.now()}`,
       stock: unlimited ? 0 : parseInt(form.stock) || 0,
       categoryId: form.categoryId,
+      images,
     })
   }
 
@@ -237,25 +275,77 @@ export function AddProductForm() {
           <div className="bg-white border rounded-xl p-6 space-y-3 shadow-md">
             <h3 className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-800`}>Upload Product Image</h3>
             <p className="text-xs text-gray-400">Product Image</p>
-            <div className="border rounded-xl h-56 flex items-center justify-center text-gray-300 text-sm bg-gray-50">
-              <Upload className="h-8 w-8" />
-            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {images.length > 0 ? (
+              <div
+                className="border rounded-xl h-56 bg-gray-50 overflow-hidden relative cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <img src={images[0]} alt="Product" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div
+                className="border rounded-xl h-56 flex items-center justify-center text-gray-300 text-sm bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                ) : (
+                  <Upload className="h-8 w-8" />
+                )}
+              </div>
+            )}
+
+            {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+
             <div className="flex gap-2">
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600">
-                <Upload className="h-3.5 w-3.5" /> Browse
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50"
+              >
+                <Upload className="h-3.5 w-3.5" /> {uploading ? 'Uploading...' : 'Browse'}
               </button>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50"
+              >
                 <RefreshCw className="h-3.5 w-3.5" /> Replace
               </button>
             </div>
+
             <div className="grid grid-cols-3 gap-2">
-              {[1, 2].map((n) => <div key={n} className="h-16 rounded-lg bg-gray-100" />)}
-              <button className="h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 text-green-600">
+              {images.map((url) => (
+                <div key={url} className="relative group h-16 rounded-lg bg-gray-100 overflow-hidden">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removeImage(url)}
+                    aria-label="Remove image"
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white/90 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 text-green-600 disabled:opacity-50"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="text-[10px]">Add Image</span>
               </button>
             </div>
-            <p className="text-[10px] text-amber-600">Image upload not yet built — needs S3/storage endpoint</p>
           </div>
 
           {/* Categories */}

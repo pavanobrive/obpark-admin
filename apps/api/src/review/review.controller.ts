@@ -1,7 +1,12 @@
-import { Controller, Get, Patch, Delete, Param } from '@nestjs/common'
+import { Controller, Get, Patch, Delete, Param, UseGuards } from '@nestjs/common'
 import { ReviewService } from './review.service'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
 
 @Controller('admin/reviews')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class ReviewController {
   constructor(private reviewService: ReviewService) {}
 
