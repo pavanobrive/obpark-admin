@@ -1,7 +1,12 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Query, UseGuards } from '@nestjs/common'
 import { TransactionService } from './transaction.service'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
+import { Roles } from '../auth/roles.decorator'
 
 @Controller('admin/transactions')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class TransactionController {
   constructor(private transactionService: TransactionService) {}
 

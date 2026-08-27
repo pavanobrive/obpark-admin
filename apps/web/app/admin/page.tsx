@@ -8,6 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'rec
 import { microgrammaBold } from '@/lib/fonts'
 import { useCategories } from '@/hooks/useCategories'
 import { Header } from '@/components/admin/layout/Header'
+import Link from 'next/link'
 
 interface DashboardStats {
   totalRevenue: number
@@ -237,7 +238,7 @@ export default function DashboardPage() {
               <thead>
                 <tr className="text-left text-xs text-gray-400 border-b">
                   <th className="pb-2 font-normal">No</th>
-                  <th className="pb-2 font-normal">Id Customer</th>
+                  <th className="pb-2 font-normal">Order ID</th>
                   <th className="pb-2 font-normal">Order Date</th>
                   <th className="pb-2 font-normal">Status</th>
                   <th className="pb-2 font-normal text-right">Amount</th>
@@ -386,7 +387,7 @@ export default function DashboardPage() {
               ))}
               {categories.length === 0 && <p className="text-xs text-gray-400">No categories yet</p>}
             </div>
-            <button className="text-xs text-blue-500 w-full text-center mb-4">See more</button>
+            <Link href="/admin/categories" className="text-xs text-blue-500 w-full text-center mb-4 block">See more</Link>
 
             <p className="text-xs text-gray-400 mb-3">Product</p>
             <div className="space-y-3">
@@ -403,7 +404,7 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-            <button className="text-xs text-blue-500 w-full text-center mt-3">See more</button>
+             <Link href="/admin/products" className="text-xs text-blue-500 w-full text-center mt-3 block">See more</Link>
           </div>
         </div>
 

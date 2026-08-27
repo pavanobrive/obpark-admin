@@ -1,28 +1,15 @@
 'use client'
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
-import { api } from '@/lib/api'
-
-interface AuthResponse {
-  user: { id: string; email: string; name: string; role: 'CUSTOMER' | 'ADMIN' }
-  accessToken: string
-  refreshToken: string
-}
+import { refreshSession } from '@/lib/auth.api'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { setAuth, clearAuth, setHydrated, refreshToken } = useAuthStore()
+  const { setAuth, clearAuth, setHydrated } = useAuthStore()
 
   useEffect(() => {
-    // No refresh token in memory — nothing to restore, mark hydrated immediately
-    if (!refreshToken) {
-      setHydrated(true)
-      return
-    }
-
-    // Try to get a new access token using the refresh token in memory
-    api.post<AuthResponse>('/auth/refresh', { refreshToken })
+    refreshSession()
       .then((res) => {
-        setAuth(res.user, res.accessToken, res.refreshToken)
+        setAuth(res.user, res.accessToken)
       })
       .catch(() => {
         clearAuth()

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { microgrammaBold } from '@/lib/fonts'
 import { ADMIN_NAV_ITEMS } from '@/lib/adminNav'
+import Link from 'next/link'
 import Image from 'next/image'
 
 interface HeaderProps {
@@ -93,7 +94,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <button className="hidden sm:flex w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center hover:bg-gray-100 transition-colors">
           <Sun className="h-4 w-4 text-gray-500" />
         </button>
-        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200">
+        <Link href="/admin/adminrole" className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200 block hover:opacity-80 transition-opacity">
   <Image
     src="/ObriveLogo.png"
     alt="User"
@@ -101,7 +102,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
     height={35}
     className="w-full h-full object-cover"
   />
-</div>
+</Link>
       </div>
     </div>
   )

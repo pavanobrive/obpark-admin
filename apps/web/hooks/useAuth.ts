@@ -6,7 +6,6 @@ import { useAuthStore } from '@/store/auth.store'
 interface AuthResponse {
   user: { id: string; email: string; name: string; role: 'CUSTOMER' | 'ADMIN' }
   accessToken: string
-  refreshToken: string
 }
 
 export function useLogin() {
@@ -17,33 +16,21 @@ export function useLogin() {
     mutationFn: (data: { email: string; password: string }) =>
       api.post<AuthResponse>('/auth/login', data),
     onSuccess: (res) => {
-      setAuth(res.user, res.accessToken, res.refreshToken)  // ← 3 args
-      router.push('/')
-    },
-  })
-}
-
-export function useRegister() {
-  const setAuth = useAuthStore((s) => s.setAuth)
-  const router = useRouter()
-
-  return useMutation({
-    mutationFn: (data: { email: string; password: string; name: string }) =>
-      api.post<AuthResponse>('/auth/register', data),
-    onSuccess: (res) => {
-      setAuth(res.user, res.accessToken, res.refreshToken)  // ← 3 args
-      router.push('/')
+      setAuth(res.user, res.accessToken)
+      router.push('/admin')
     },
   })
 }
 
 export function useLogout() {
-  const { clearAuth, refreshToken } = useAuthStore()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
   const router = useRouter()
 
-  return () => {
-    if (refreshToken) {
-      api.post('/auth/logout', { refreshToken }).catch(() => {})
+  return async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // ignore network errors on logout, clear local state regardless
     }
     clearAuth()
     router.push('/login')

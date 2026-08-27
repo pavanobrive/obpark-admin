@@ -11,10 +11,9 @@ interface User {
 interface AuthState {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
   isHydrated: boolean
-  setAuth: (user: User, accessToken: string, refreshToken?: string) => void
+  setAuth: (user: User, accessToken: string) => void
   clearAuth: () => void
   setHydrated: (value: boolean) => void
   updateUser: (partial: Partial<User>) => void
@@ -25,20 +24,14 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isHydrated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
-        set((state) => ({
-          user,
-          accessToken,
-          refreshToken: refreshToken ?? state.refreshToken,
-          isAuthenticated: true,
-        })),
+      setAuth: (user, accessToken) =>
+        set({ user, accessToken, isAuthenticated: true }),
 
       clearAuth: () =>
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false }),
+        set({ user: null, accessToken: null, isAuthenticated: false }),
 
       setHydrated: (value) => set({ isHydrated: value }),
 
@@ -52,7 +45,6 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     },

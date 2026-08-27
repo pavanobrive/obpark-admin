@@ -5,14 +5,14 @@ import { PrismaService } from '../prisma/prisma.service'
 export class ProfileService {
   constructor(private prisma: PrismaService) {}
 
-  private async getAdminUser() {
-    const user = await this.prisma.user.findFirst({ where: { role: 'ADMIN' } })
-    if (!user) throw new NotFoundException('No admin user found')
+  private async getUserById(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+    if (!user) throw new NotFoundException('User not found')
     return user
   }
 
-  async getProfile() {
-    const user = await this.getAdminUser()
+  async getProfile(userId: string) {
+    const user = await this.getUserById(userId)
     const [firstName, ...rest] = user.name.split(' ')
     return {
       firstName: firstName ?? '',
@@ -30,8 +30,8 @@ export class ProfileService {
     }
   }
 
-  async updateProfile(dto: { firstName?: string; lastName?: string; phone?: string; email?: string }) {
-    const user = await this.getAdminUser()
+  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string; phone?: string; email?: string }) {
+    const user = await this.getUserById(userId)
     const currentParts = user.name.split(' ')
     const currentFirst = currentParts[0] ?? ''
     const currentLast = currentParts.slice(1).join(' ')
