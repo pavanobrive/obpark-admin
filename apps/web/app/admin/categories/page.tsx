@@ -115,10 +115,14 @@ export default function CategoriesPage() {
     c.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleDelete = (id: string, name: string) => {
-    if (!confirm(`Delete category "${name}"?`)) return
-    deleteCategory.mutate(id)
-  }
+ const handleDelete = (id: string, name: string) => {
+  if (!confirm(`Delete category "${name}"?`)) return
+  deleteCategory.mutate(id, {
+    onError: (err: any) => {
+      alert(err?.message || 'Failed to delete category')
+    },
+  })
+}
 
   return (
     <div className="min-h-screen bg-gray-50">
