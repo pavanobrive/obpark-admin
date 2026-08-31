@@ -5,6 +5,7 @@ import { Search, Save, Upload, Plus, Wand2, Pencil, RefreshCw, ChevronDown, X, L
 import { useCreateProduct } from '@/hooks/useCreateProduct'
 import { useCategories } from '@/hooks/useCategories'
 import { api } from '@/lib/api'
+import { useAuthStore } from '@/store/auth.store'
 import { microgrammaBold } from '@/lib/fonts'
 
 const COLORS = ['#C7E8D4', '#F4C4C4', '#C4CCD4', '#EDE1B0', '#3A3A3A']
@@ -27,32 +28,38 @@ export function AddProductForm() {
   const canPublish = form.name.trim() !== '' && form.price !== '' && form.categoryId !== ''
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    setUploadError('')
-    setUploading(true)
+  const files = e.target.files
+  if (!files || files.length === 0) return
+  setUploadError('')
+  setUploading(true)
 
-    try {
-      const uploaded: string[] = []
-      for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append('file', file)
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/admin/media/upload`, {
-          method: 'POST',
-          body: formData,
-        })
-        if (!res.ok) throw new Error('Upload failed')
-        const data = await res.json()
-        uploaded.push(data.url)
-      }
-      setImages((prev) => [...prev, ...uploaded])
-    } catch {
-      setUploadError('Failed to upload one or more images. Try again.')
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+  try {
+    const uploaded: string[] = []
+    const token = useAuthStore.getState().accessToken
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+      uploaded.push(data.url)
     }
+    setImages((prev) => [...prev, ...uploaded])
+  } catch {
+    setUploadError('Failed to upload one or more images. Try again.')
+  } finally {
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
+}
 
   function removeImage(url: string) {
     setImages((prev) => prev.filter((i) => i !== url))
