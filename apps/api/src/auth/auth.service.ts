@@ -41,7 +41,9 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: session.userId } })
     if (!user) throw new UnauthorizedException('User not found')
 
-    await this.prisma.session.delete({ where: { id: session.id } })
+    await this.prisma.session.deleteMany({
+  where: { id: session.id },
+})
     return this.issueTokens(user.id, user.email, user.role)
   }
 

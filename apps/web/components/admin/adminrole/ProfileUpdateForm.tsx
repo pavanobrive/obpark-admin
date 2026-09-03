@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect,useRef } from 'react'
 import { Upload, Trash2, Wand2, Pencil } from 'lucide-react'
 import { useUpdateProfile } from '@/hooks/useProfile'
 import type { AdminProfile } from './types'
@@ -16,6 +16,8 @@ export function ProfileUpdateForm({ profile }: ProfileUpdateFormProps) {
     firstName: '', lastName: '', phone: '', email: '', dob: '', location: '', bio: '',
   })
   const updateProfile = useUpdateProfile()
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (profile) {
@@ -30,6 +32,23 @@ export function ProfileUpdateForm({ profile }: ProfileUpdateFormProps) {
       })
     }
   }, [profile])
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+
+  if (!file) return
+
+  const imageUrl = URL.createObjectURL(file)
+  setProfileImage(imageUrl)
+}
+
+const handleDeleteImage = () => {
+  setProfileImage(null)
+
+  if (fileInputRef.current) {
+    fileInputRef.current.value = ''
+  }
+}
 
   const handleSave = () => {
     updateProfile.mutate({
@@ -56,18 +75,45 @@ export function ProfileUpdateForm({ profile }: ProfileUpdateFormProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0" />
-        <button
-          disabled={!editing}
-          className={` ${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium disabled:opacity-50`}
-          style={{ backgroundColor: '#074139' }}
-        >
-          <Upload className="h-3.5 w-3.5" /> Upload New
-        </button>
-        <button disabled={!editing} className={` ${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50`}>
-          <Trash2 className="h-3.5 w-3.5" /> Delete
-        </button>
-      </div>
+  <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+    {profileImage && (
+      <img
+        src={profileImage}
+        alt="Profile"
+        className="w-full h-full object-cover"
+      />
+    )}
+  </div>
+
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*"
+    className="hidden"
+    onChange={handleImageUpload}
+  />
+
+  <button
+    type="button"
+    disabled={!editing}
+    onClick={() => fileInputRef.current?.click()}
+    className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium disabled:opacity-50`}
+    style={{ backgroundColor: '#074139' }}
+  >
+    <Upload className="h-3.5 w-3.5" />
+    Upload New
+  </button>
+
+  <button
+    type="button"
+    disabled={!editing || !profileImage}
+    onClick={handleDeleteImage}
+    className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50`}
+  >
+    <Trash2 className="h-3.5 w-3.5" />
+    Delete
+  </button>
+</div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>

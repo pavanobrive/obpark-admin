@@ -91,16 +91,21 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <button className="hidden sm:flex w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center hover:bg-gray-100 transition-colors">
           <Bell className="h-4 w-4 text-gray-500" />
         </button>
-        <button className="hidden sm:flex w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center hover:bg-gray-100 transition-colors">
+       {/* <button className="hidden sm:flex w-10 h-10 rounded-full bg-gray-50 border border-gray-200 items-center justify-center hover:bg-gray-100 transition-colors">
           <Sun className="h-4 w-4 text-gray-500" />
-        </button>
-        <Link href="/admin/adminrole" className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200 block hover:opacity-80 transition-opacity">
+        </button> */}
+        
+        <Link
+  href="/admin/adminrole"
+  className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center hover:opacity-80 transition-opacity"
+  style={{ backgroundColor: '#B0DEDA' }}
+>
   <Image
-    src="/ObriveLogo.png"
-    alt="User"
-    width={35}
-    height={35}
-    className="w-full h-full object-cover"
+    src="/icon.svg"
+    alt="Obrive"
+    width={48}
+    height={48}
+    className="w-full h-full object-contain p-1.5"
   />
 </Link>
       </div>

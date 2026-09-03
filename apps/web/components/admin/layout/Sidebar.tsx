@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useLogout } from '@/hooks/useAuth'
 import { microgrammaBold } from '@/lib/fonts'
+import Image from 'next/image'
 
 const NAV_GROUPS = [
   {
@@ -47,12 +48,26 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div className="px-6 py-5 border-b">
-        <Link href="/" className={`font-bold text-lg ${microgrammaBold.className}`} style={{ color: '#074139' }}>
-          Obrive
-        </Link>
-        <p className="text-xs text-muted-foreground mt-0.5">Admin Panel</p>
-      </div>
+      <div className="px-6 py-4 border-b">
+  <Link
+    href="/"
+    className="flex items-center justify-center"
+  >
+    <div
+      className="flex h-14 w-full items-center justify-center rounded-lg overflow-hidden"
+      style={{ backgroundColor: '#95D0CC' }}
+    >
+      <Image
+        src="/ObriveLogo.png"
+        alt="Obrive"
+        width={180}
+        height={50}
+        className="h-auto w-auto max-h-10 max-w-full object-contain"
+        priority
+      />
+    </div>
+  </Link>
+</div>
 
       <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
