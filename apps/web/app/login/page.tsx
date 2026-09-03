@@ -54,14 +54,24 @@ export default function LoginPage() {
       {/* Left — brand panel */}
       <div
         className="hidden lg:flex lg:w-[46%] relative flex-col justify-between overflow-hidden px-12 py-10"
-        style={{ background: 'linear-gradient(160deg, #05302a 0%, #074139 55%, #0f6b5c 100%)' }}
+        style={{ background: '#95D0CC' }}
       >
-        <div>
-          <h1 className={`${microgrammaBold.className} text-2xl font-bold text-white tracking-wide`}>
-            OBRIVE
-          </h1>
-          <p className="text-xs text-white/50 mt-1 tracking-wide">Admin Panel</p>
-        </div>
+        <div className="flex items-center gap-3">
+  <img
+    src="/icon.svg"
+    alt="Obrive"
+    className="h-12 w-12 object-contain"
+  />
+
+  <div>
+    <h1 className={`${microgrammaBold.className} text-2xl font-bold text-[#05302a] tracking-wide`}>
+      OBRIVE
+    </h1>
+    <p className="text-xs text-[#05302a]/70 mt-1 tracking-wide">
+      Admin Panel
+    </p>
+  </div>
+</div>
 
         {/* Signature: perspective route with waypoints for the three product pillars */}
         <div className="relative flex-1 my-8">
@@ -73,10 +83,10 @@ export default function LoginPage() {
           >
             <defs>
               <linearGradient id="roadFade" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#A2F1DF" stopOpacity="0" />
-                <stop offset="15%" stopColor="#A2F1DF" stopOpacity="0.55" />
-                <stop offset="100%" stopColor="#A2F1DF" stopOpacity="0.9" />
-              </linearGradient>
+  <stop offset="0%" stopColor="#05302a" stopOpacity="0" />
+  <stop offset="15%" stopColor="#05302a" stopOpacity="0.45" />
+  <stop offset="100%" stopColor="#05302a" stopOpacity="0.8" />
+</linearGradient>
               <filter id="glow">
                 <feGaussianBlur stdDeviation="4" result="blur" />
                 <feMerge>
@@ -87,8 +97,8 @@ export default function LoginPage() {
             </defs>
 
             {/* road shoulders, converging */}
-            <path d="M 40 480 L 195 10" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="2" fill="none" />
-            <path d="M 260 480 L 210 10" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="2" fill="none" />
+            <path d="M 40 480 L 195 10" stroke="#05302a" strokeOpacity="0.25" strokeWidth="2" fill="none" />
+            <path d="M 260 480 L 210 10" stroke="#05302a" strokeOpacity="0.25" strokeWidth="2" fill="none" />
 
             {/* animated dashed centerline */}
             <path
@@ -102,7 +112,7 @@ export default function LoginPage() {
             />
 
             {/* traveling glow dot representing a live vehicle */}
-            <circle r="5" fill="#A2F1DF" filter="url(#glow)" className="obrive-travel-dot" />
+            <circle r="5" fill="#05302a" filter="url(#glow)" className="obrive-travel-dot" />
           </svg>
 
           {/* waypoint labels — real product pillars, not decorative numbers */}
@@ -113,8 +123,8 @@ export default function LoginPage() {
                 className="obrive-waypoint flex items-center gap-2"
                 style={{ animationDelay: `${0.15 + i * 0.15}s` }}
               >
-                <span className="h-1.5 w-1.5 rounded-full bg-[#A2F1DF]" />
-                <span className={`${microgrammaBold.className} text-[13px] text-white/90 tracking-wide`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#05302a]" />
+                <span className={`${microgrammaBold.className} text-[13px] text-[#05302a] tracking-wide`}>
                   {w.label}
                 </span>
               </div>
@@ -123,14 +133,14 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-white/70 leading-relaxed max-w-xs">
+          <p className="text-sm text-[#05302a]/80 leading-relaxed max-w-xs">
             Smart vehicle commerce, parking and mobility — run from one dashboard.
           </p>
-          <div className="flex items-center gap-2 text-xs text-white/50">
+          <div className="flex items-center gap-2 text-xs text-[#05302a]/70">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A2F1DF] opacity-60" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A2F1DF]" />
-            </span>
+  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#05302a] opacity-40" />
+  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#05302a]" />
+</span>
             All systems operational
           </div>
         </div>
@@ -140,12 +150,24 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           {/* Mobile-only brand mark */}
-          <div className="lg:hidden mb-8 text-center">
-            <h1 className={`${microgrammaBold.className} text-xl font-bold`} style={{ color: '#074139' }}>
-              OBRIVE
-            </h1>
-            <p className="text-xs text-gray-400 mt-1">Admin Panel</p>
-          </div>
+          <div className="lg:hidden mb-8 flex flex-col items-center">
+  <img
+    src="/icon.svg"
+    alt="Obrive"
+    className="h-16 w-16 object-contain mb-3"
+  />
+
+  <h1
+    className={`${microgrammaBold.className} text-xl font-bold`}
+    style={{ color: '#074139' }}
+  >
+    OBRIVE
+  </h1>
+
+  <p className="text-xs text-gray-400 mt-1">
+    Admin Panel
+  </p>
+</div>
 
           <h2 className={`${microgrammaBold.className} text-[22px] font-semibold text-gray-800`}>
             Sign in
