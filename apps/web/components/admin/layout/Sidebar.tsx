@@ -55,7 +55,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   >
     <div
       className="flex h-14 w-full items-center justify-center rounded-lg overflow-hidden"
-      style={{ backgroundColor: '#95D0CC' }}
     >
       <Image
         src="/ObriveLogo.png"

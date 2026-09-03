@@ -9,6 +9,31 @@ export interface Category {
   imageUrl?: string
 }
 
+export interface Product {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  basePrice: number
+  images: string[]
+  stock: number
+  compatibility: {
+    make: string
+    model: string
+    yearFrom: number
+    yearTo: number
+  }[]
+  category?: Category
+  compatibilityStatus?: 'compatible' | 'incompatible' | 'unknown'
+}
+
+export interface ProductsResponse {
+  products: Product[]
+  total: number
+  limit: number
+  offset: number
+}
+
 export function useCategories() {
   return useQuery({
     queryKey: ['categories'],
@@ -47,5 +72,43 @@ export function useDeleteCategory() {
         queryKey: ['categories'],
       })
     },
+  })
+}
+
+export function useProducts(
+  filters: Record<string, string | number | undefined> = {}
+) {
+  const params = new URLSearchParams()
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      params.set(key, String(value))
+    }
+  })
+
+  return useQuery({
+    queryKey: ['products', filters],
+    queryFn: () =>
+      api.get<ProductsResponse>(
+        `/products?${params.toString()}`
+      ),
+  })
+}
+
+export function useFeaturedProducts() {
+  return useQuery({
+    queryKey: ['products', 'featured'],
+    queryFn: () => api.get<Product[]>('/products/featured'),
+  })
+}
+
+export function useProduct(slug: string, vrn?: string) {
+  return useQuery({
+    queryKey: ['product', slug, vrn],
+    queryFn: () =>
+      api.get<Product>(
+        `/products/${slug}${vrn ? `?vrn=${vrn}` : ''}`
+      ),
+    enabled: !!slug,
   })
 }

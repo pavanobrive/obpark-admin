@@ -1,10 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, MoreVertical, Search, Filter, MoreHorizontal, Pencil, Trash2, X } from 'lucide-react'
+import { Plus, MoreVertical, Search, Filter, MoreHorizontal, Pencil, Trash2, X,Download } from 'lucide-react'
+
 import { microgrammaBold } from '@/lib/fonts'
 import { Header } from '@/components/admin/layout/Header'
-import { useCategories, useCreateCategory, useDeleteCategory } from '@/hooks/useCategories'
+import {
+  useCategories,
+  useCreateCategory,
+  useDeleteCategory,
+} from '@/hooks/useCategories'
 
 const TABS = ['All Product', 'Featured Products', 'On Sale', 'Out of Stock']
 
@@ -31,8 +36,7 @@ function AddCategoryModal({ onClose }: { onClose: () => void }) {
         description: description.trim() || undefined,
       })
       onClose()
-    } catch (err) {
-      // error surfaced below via createCategory.error
+    } catch (err){
     }
   }
 
@@ -101,6 +105,8 @@ function AddCategoryModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+
+
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState('All Product')
@@ -232,16 +238,31 @@ export default function CategoriesPage() {
                     <td className="px-3 py-3 text-gray-500">{c.slug}</td>
                     <td className="px-3 py-3 text-gray-500">{c.description || '—'}</td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <button className="text-gray-400 hover:text-gray-600"><Pencil className="h-4 w-4" /></button>
-                        <button
-                          onClick={() => handleDelete(c.id, c.name)}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+  <div className="flex items-center gap-2">
+    <button
+      className="text-gray-400 hover:text-gray-600"
+      title="Edit category"
+    >
+      <Pencil className="h-4 w-4" />
+    </button>
+
+    <button
+      onClick={() => handleDelete(c.id, c.name)}
+      className="text-gray-400 hover:text-red-500"
+      title="Delete category"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
+
+    <button
+      onClick={() => alert('Download feature is currently unavailable')}
+      className="text-gray-400 hover:text-[#074139]"
+      title="Download products"
+    >
+      <Download className="h-4 w-4" />
+    </button>
+  </div>
+</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && !isLoading && (
