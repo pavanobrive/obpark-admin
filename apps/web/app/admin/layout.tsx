@@ -1,12 +1,30 @@
 // apps/web/app/admin/layout.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { Sidebar } from '@/components/admin/layout/Sidebar'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  const router = useRouter()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const isHydrated = useAuthStore((state) => state.isHydrated)
+
+  useEffect(() => {
+    if (!isHydrated) return
+
+    if (!isAuthenticated) {
+      router.replace('/login')
+    }
+  }, [isHydrated, isAuthenticated, router])
+
+  if (!isHydrated || !isAuthenticated) {
+    return null
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -15,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Sidebar />
       </aside>
 
-      {/* Floating hamburger — mobile only, always visible, above everything */}
+      {/* Floating hamburger - mobile only, always visible, above everything */}
       <button
         onClick={() => setDrawerOpen(true)}
         aria-label="Open menu"
@@ -28,8 +46,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className={`fixed inset-0 z-50 lg:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}>
         <div
           onClick={() => setDrawerOpen(false)}
-          className={`absolute inset-0 bg-black/40 transition-opacity ${drawerOpen ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black/40 transition-opacity ${
+            drawerOpen ? 'opacity-100' : 'opacity-0'
+          }`}
         />
+
         <div
           className={`absolute left-0 top-0 h-full w-72 max-w-[85%] shadow-xl transition-transform ${
             drawerOpen ? 'translate-x-0' : '-translate-x-full'
@@ -42,6 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <X className="h-5 w-5" />
           </button>
+
           <Sidebar onNavigate={() => setDrawerOpen(false)} />
         </div>
       </div>
