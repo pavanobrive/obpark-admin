@@ -27,29 +27,6 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
           <div className="w-16 h-16 rounded-full bg-gray-200 mb-3" />
           <p className="font-semibold text-gray-800">{profile?.firstName} {profile?.lastName}</p>
           <p className="text-xs text-gray-400">{profile?.email}</p>
-
-          <p className="text-xs text-gray-400 mt-4 mb-2">Linked with Social media</p>
-          <div className="flex items-center gap-4">
-            {(profile?.socials ?? [
-              { provider: 'Google', linked: false },
-              { provider: 'Facebook', linked: false },
-              { provider: 'X', linked: false },
-            ]).map((s) => (
-              <div key={s.provider} className="flex items-center gap-1 text-xs">
-                <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[9px] font-bold text-gray-500">
-                  {s.provider[0]}
-                </span>
-                <span className={s.linked ? 'text-green-600' : 'text-gray-400'}>
-                  {s.linked ? 'Linked' : 'Not linked'}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-amber-600 mt-2">Social linkage status not in backend yet — placeholder</p>
-
-          <button className={` ${microgrammaBold.className} mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm text-gray-600`}>
-            <Plus className="h-4 w-4" /> Social media
-          </button>
         </div>
       )}
     </div>

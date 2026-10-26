@@ -1,6 +1,8 @@
-import { Controller, Post, Body, Res, Req } from '@nestjs/common'
+import { Controller, Post, Patch, Body, Res, Req, UseGuards } from '@nestjs/common'
 import type { Response, Request } from 'express'
 import { AuthService } from './auth.service'
+import { JwtAuthGuard } from './jwt-auth.guard'
+import { CurrentUser } from './current-user.decorator'
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +45,15 @@ export class AuthController {
     if (refreshToken) await this.authService.logout(refreshToken)
     res.clearCookie('refreshToken')
     return { success: true }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('password')
+  async changePassword(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: { currentPassword: string; newPassword: string },
+  ) {
+    return this.authService.changePassword(user.userId, dto.currentPassword, dto.newPassword)
   }
 
   private setRefreshCookie(res: Response, token: string) {

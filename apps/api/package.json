@@ -9,11 +9,11 @@
     "build": "nest build",
     "postinstall": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "free-port": "kill-port 3001",
+    "free-port": "kill-port 3055",
     "dev": "nest start --watch",
-    "predev": "kill-port 3001",
+    "predev": "kill-port 3055",
     "start": "nest start",
-    "prestart:dev": "kill-port 3001",
+    "prestart:dev": "kill-port 3055",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -23,7 +23,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node --no-warnings -r tsx prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

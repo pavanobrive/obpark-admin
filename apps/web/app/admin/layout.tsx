@@ -29,9 +29,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:shrink-0 border-r">
-        <Sidebar />
-      </aside>
+      {/* <aside className="hidden lg:flex lg:w-64 lg:shrink-0 border-r">
+
+      </aside> */}
+
+      <Sidebar />
 
       {/* Floating hamburger - mobile only, always visible, above everything */}
       <button
@@ -46,15 +48,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className={`fixed inset-0 z-50 lg:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}>
         <div
           onClick={() => setDrawerOpen(false)}
-          className={`absolute inset-0 bg-black/40 transition-opacity ${
-            drawerOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`absolute inset-0 bg-black/40 transition-opacity ${drawerOpen ? 'opacity-100' : 'opacity-0'
+            }`}
         />
 
         <div
-          className={`absolute left-0 top-0 h-full w-72 max-w-[85%] shadow-xl transition-transform ${
-            drawerOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          className={`absolute left-0 top-0 h-full w-72 max-w-[85%] shadow-xl transition-transform ${drawerOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
         >
           <button
             onClick={() => setDrawerOpen(false)}

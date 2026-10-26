@@ -6,22 +6,27 @@ export class CustomersService {
   constructor(private prisma: PrismaService) {}
 
   async listCustomers(search?: string) {
-    const where = search
+    const where: any = search
       ? {
-          name: {
-            contains: search,
-            mode: 'insensitive' as const,
-          },
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' as const } },
+            { lastName: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { phoneNumber: { contains: search, mode: 'insensitive' as const } },
+          ],
         }
       : {}
 
-    const users = await this.prisma.user.findMany({
+    const users = await this.prisma.users.findMany({
       where,
       include: {
         orders: {
           select: {
-            total: true,
+            totalAmount: true,
           },
+        },
+        addresses: {
+          orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
         },
       },
       orderBy: {
@@ -31,35 +36,44 @@ export class CustomersService {
 
     return users.map((u, index) => {
       const orderCount = u.orders.length
-
       const totalSpend = u.orders.reduce(
-        (sum, order) => sum + Number(order.total),
-        0,
+        (sum, order) => sum + Number(order.totalAmount),
+        0
       )
+      const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Customer'
+      const primaryAddress = u.addresses[0]
 
       return {
-        // Display ID: 1, 2, 3, 4...
         id: String(index + 1),
-
-        name: u.name || 'Unnamed',
-
-        phone: u.phone ?? '—',
-
+        userId: u.id,
+        name,
+        email: u.email ?? '—',
+        phone: u.phoneNumber ?? '—',
         orderCount,
-
         totalSpend,
-
-        status:
-          totalSpend > 4000
-            ? 'VIP'
-            : orderCount === 0
-              ? 'Inactive'
-              : 'Active',
+        avatar: u.profileImage ?? null,
+        city: u.city || (primaryAddress ? primaryAddress.city : '—'),
+        status: u.isActive ? 'Active' : 'Inactive',
+        addresses: u.addresses.map((a) => ({
+          id: a.id,
+          label: a.label,
+          type: a.type,
+          streetAddress: a.streetAddress,
+          apartmentSuite: a.apartmentSuite,
+          city: a.city,
+          zipCode: a.zipCode,
+          country: a.country,
+          isDefault: a.isDefault,
+        })),
       }
     })
   }
 
+  async getCustomerCount() {
+    return this.prisma.users.count()
+  }
+
   async getTotalCustomers() {
-    return this.prisma.user.count()
+    return this.prisma.users.count()
   }
 }

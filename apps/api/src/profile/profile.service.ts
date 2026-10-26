@@ -13,10 +13,11 @@ export class ProfileService {
 
   async getProfile(userId: string) {
     const user = await this.getUserById(userId)
-    const [firstName, ...rest] = user.name.split(' ')
+    const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : '')
+    const lastName = user.lastName || (user.name ? user.name.split(' ').slice(1).join(' ') : '')
     return {
       firstName: firstName ?? '',
-      lastName: rest.join(' '),
+      lastName: lastName ?? '',
       email: user.email,
       phone: user.phone ?? '',
       dob: '',
@@ -30,31 +31,49 @@ export class ProfileService {
     }
   }
 
-  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string; phone?: string; email?: string }) {
+  async updateProfile(userId: string, dto: { firstName?: string; lastName?: string; phone?: string; email?: string; dob?: string; location?: string; avatarUrl?: string }) {
     const user = await this.getUserById(userId)
-    const currentParts = user.name.split(' ')
-    const currentFirst = currentParts[0] ?? ''
-    const currentLast = currentParts.slice(1).join(' ')
 
-    const newFirst = dto.firstName ?? currentFirst
-    const newLast = dto.lastName ?? currentLast
+    const newFirst = dto.firstName ?? user.firstName ?? (user.name ? user.name.split(' ')[0] : '')
+    const newLast = dto.lastName ?? user.lastName ?? (user.name ? user.name.split(' ').slice(1).join(' ') : '')
     const name = [newFirst, newLast].filter(Boolean).join(' ')
 
     const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: {
+        firstName: newFirst,
+        lastName: newLast,
         name,
         phone: dto.phone ?? user.phone,
         email: dto.email ?? user.email,
       },
     })
 
-    const [firstName, ...rest] = updated.name.split(' ')
+    try {
+      if (updated.email) {
+        await this.prisma.users.updateMany({
+          where: { email: updated.email },
+          data: {
+            firstName: newFirst,
+            lastName: newLast,
+            phoneNumber: dto.phone ?? user.phone,
+            city: dto.location || undefined,
+            profileImage: dto.avatarUrl || undefined,
+          },
+        })
+      }
+    } catch {
+      // non-blocking
+    }
+
     return {
-      firstName: firstName ?? '',
-      lastName: rest.join(' '),
+      firstName: updated.firstName ?? newFirst,
+      lastName: updated.lastName ?? newLast,
       email: updated.email,
       phone: updated.phone ?? '',
+      dob: dto.dob ?? '',
+      location: dto.location ?? '',
+      avatarUrl: dto.avatarUrl,
     }
   }
 }

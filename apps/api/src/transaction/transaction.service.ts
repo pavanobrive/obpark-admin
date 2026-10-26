@@ -1,18 +1,22 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { PaymentStatus } from '@prisma/client'
 
 @Injectable()
 export class TransactionService {
   constructor(private prisma: PrismaService) {}
 
-  async listTransactions(filters: { status?: string; limit?: number; offset?: number }) {
+  async listTransactions(filters: { status?: PaymentStatus; limit?: number; offset?: number }) {
     const { status, limit = 20, offset = 0 } = filters
     const where: any = status ? { status } : {}
 
     const [payments, total] = await Promise.all([
       this.prisma.payment.findMany({
         where,
-        include: { order: { include: { user: { select: { name: true } } } } },
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true } },
+          order: { select: { id: true, orderNumber: true } },
+        },
         orderBy: { createdAt: 'desc' },
         take: Number(limit),
         skip: Number(offset),
@@ -21,26 +25,48 @@ export class TransactionService {
     ])
 
     return {
-      transactions: payments.map((p) => ({
-        id: p.id,
-        customerId: p.order.userId,
-        name: p.order.user.name,
-        date: p.createdAt,
-        total: Number(p.amount),
-        method: 'Razorpay',
-        status: p.status === 'CAPTURED' ? 'Complete' : p.status === 'FAILED' ? 'Failed' : 'Pending',
-      })),
+      transactions: payments.map((p) => {
+        const customerName = p.user
+          ? `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || p.user.email
+          : 'Customer'
+
+        return {
+          id: p.id,
+          orderId: p.orderId,
+          orderNumber: p.order?.orderNumber || '—',
+          customerId: p.userId,
+          name: customerName,
+          date: p.createdAt,
+          total: Number(p.amount),
+          method: p.gateway || 'Razorpay',
+          status:
+            p.status === PaymentStatus.SUCCESS
+              ? 'Complete'
+              : p.status === PaymentStatus.FAILED
+              ? 'Failed'
+              : 'Pending',
+        }
+      }),
       total,
     }
   }
 
   async getSummary() {
     const [totalRevenue, completed, pending, failed] = await Promise.all([
-      this.prisma.payment.aggregate({ where: { status: 'CAPTURED' }, _sum: { amount: true } }),
-      this.prisma.payment.count({ where: { status: 'CAPTURED' } }),
-      this.prisma.payment.count({ where: { status: 'PENDING' } }),
-      this.prisma.payment.count({ where: { status: 'FAILED' } }),
+      this.prisma.payment.aggregate({
+        where: { status: PaymentStatus.SUCCESS },
+        _sum: { amount: true },
+      }),
+      this.prisma.payment.count({ where: { status: PaymentStatus.SUCCESS } }),
+      this.prisma.payment.count({ where: { status: PaymentStatus.PENDING } }),
+      this.prisma.payment.count({ where: { status: PaymentStatus.FAILED } }),
     ])
-    return { totalRevenue: Number(totalRevenue._sum.amount ?? 0), completed, pending, failed }
+
+    return {
+      totalRevenue: Number(totalRevenue._sum?.amount ?? 0),
+      completed,
+      pending,
+      failed,
+    }
   }
 }

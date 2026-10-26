@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/auth.store'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3055'
 
 async function request<T>(
   endpoint: string,

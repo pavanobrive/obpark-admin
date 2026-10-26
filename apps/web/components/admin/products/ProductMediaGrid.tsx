@@ -12,7 +12,7 @@ export function ProductMediaGrid() {
     .filter((p: any) => p.images && p.images.length > 0)
     .flatMap((p: any) => p.images.map((url: string, i: number) => ({
       url,
-      productName: p.name,
+      productName: p.productName || p.name || "Product",
       productId: p.id,
       key: `${p.id}-${i}`,
     })))

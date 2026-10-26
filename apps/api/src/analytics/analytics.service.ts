@@ -1,17 +1,34 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { OrderStatus } from '@prisma/client'
+
+const COUNT_STATUSES: OrderStatus[] = [
+  OrderStatus.DELIVERED,
+  OrderStatus.PENDING,
+  OrderStatus.PROCESSING,
+  OrderStatus.CANCELLED,
+]
+
+const REVENUE_STATUSES: OrderStatus[] = [
+  OrderStatus.CONFIRMED,
+  OrderStatus.PROCESSING,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+]
 
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
   async getOrderStatusBreakdown() {
-    const statuses = ['DELIVERED', 'PENDING', 'PROCESSING', 'CANCELLED']
     const counts = await Promise.all(
-      statuses.map((s) => this.prisma.order.count({ where: { status: s as any } }))
+      COUNT_STATUSES.map((s) => this.prisma.order.count({ where: { status: s } }))
     )
     const total = counts.reduce((a, b) => a + b, 0) || 1
-    return statuses.map((name, i) => ({ name, value: Math.round((counts[i] / total) * 100) }))
+    return COUNT_STATUSES.map((name, i) => ({
+      name,
+      value: Math.round((counts[i] / total) * 100),
+    }))
   }
 
   async getRevenueTrend(days = 7) {
@@ -19,8 +36,11 @@ export class AnalyticsService {
     since.setDate(since.getDate() - days)
 
     const orders = await this.prisma.order.findMany({
-      where: { createdAt: { gte: since }, status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] } },
-      select: { createdAt: true, total: true },
+      where: {
+        createdAt: { gte: since },
+        status: { in: REVENUE_STATUSES },
+      },
+      select: { createdAt: true, totalAmount: true },
     })
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -29,7 +49,7 @@ export class AnalyticsService {
 
     orders.forEach((o) => {
       const day = dayNames[new Date(o.createdAt).getDay()]
-      buckets[day] += Number(o.total)
+      buckets[day] += Number(o.totalAmount)
     })
 
     return dayNames.map((day) => ({ day, value: buckets[day] }))

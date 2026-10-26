@@ -38,7 +38,7 @@ export function ChangePasswordCard() {
             {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        <button className="text-xs text-blue-500 mt-1">Forgot Current Password? Click here</button>
+
       </div>
 
       <div>

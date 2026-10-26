@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect,useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Upload, Trash2, Wand2, Pencil } from 'lucide-react'
 import { useUpdateProfile } from '@/hooks/useProfile'
 import type { AdminProfile } from './types'
@@ -34,21 +34,21 @@ export function ProfileUpdateForm({ profile }: ProfileUpdateFormProps) {
   }, [profile])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
+    const file = e.target.files?.[0]
 
-  if (!file) return
+    if (!file) return
 
-  const imageUrl = URL.createObjectURL(file)
-  setProfileImage(imageUrl)
-}
-
-const handleDeleteImage = () => {
-  setProfileImage(null)
-
-  if (fileInputRef.current) {
-    fileInputRef.current.value = ''
+    const imageUrl = URL.createObjectURL(file)
+    setProfileImage(imageUrl)
   }
-}
+
+  const handleDeleteImage = () => {
+    setProfileImage(null)
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const handleSave = () => {
     updateProfile.mutate({
@@ -75,45 +75,45 @@ const handleDeleteImage = () => {
       </div>
 
       <div className="flex items-center gap-3">
-  <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0 overflow-hidden">
-    {profileImage && (
-      <img
-        src={profileImage}
-        alt="Profile"
-        className="w-full h-full object-cover"
-      />
-    )}
-  </div>
+        <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+          {profileImage && (
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
 
-  <input
-    ref={fileInputRef}
-    type="file"
-    accept="image/*"
-    className="hidden"
-    onChange={handleImageUpload}
-  />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
 
-  <button
-    type="button"
-    disabled={!editing}
-    onClick={() => fileInputRef.current?.click()}
-    className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium disabled:opacity-50`}
-    style={{ backgroundColor: '#074139' }}
-  >
-    <Upload className="h-3.5 w-3.5" />
-    Upload New
-  </button>
+        <button
+          type="button"
+          disabled={!editing}
+          onClick={() => fileInputRef.current?.click()}
+          className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-white font-medium disabled:opacity-50`}
+          style={{ backgroundColor: '#074139' }}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Upload New
+        </button>
 
-  <button
-    type="button"
-    disabled={!editing || !profileImage}
-    onClick={handleDeleteImage}
-    className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50`}
-  >
-    <Trash2 className="h-3.5 w-3.5" />
-    Delete
-  </button>
-</div>
+        <button
+          type="button"
+          disabled={!editing || !profileImage}
+          onClick={handleDeleteImage}
+          className={`${microgrammaBold.className} flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs text-gray-600 disabled:opacity-50`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -173,16 +173,6 @@ const handleDeleteImage = () => {
           />
           <p className="text-[10px] text-amber-600 mt-1">Location field not confirmed in backend schema</p>
         </div>
-      </div>
-
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Credit Card</label>
-        <input
-          disabled={!editing}
-          placeholder="•••• •••• •••• ••••"
-          className="w-full px-3 py-2 rounded-lg border text-sm outline-none disabled:bg-gray-50 disabled:text-gray-500"
-        />
-        <p className="text-[10px] text-amber-600 mt-1">Not stored in backend — likely shouldn't be, handle via payment gateway tokenization instead</p>
       </div>
 
       <div>

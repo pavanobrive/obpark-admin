@@ -1,27 +1,98 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// ====================================================================================
+// DATABASE CONNECTION BLOCK
+// ====================================================================================
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User {
+// ====================================================================================
+// PRISMA CLIENT GENERATOR BLOCK
+// ====================================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========================================================
+// Database tables from here
+// ========================================================
+
+//// Actual users table ----------------------------------
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum Role {
+  CUSTOMER
+  DRIVER
+  MECHANIC
+  ADMIN_OBCREW
+  ADMIN_OBPARK
+  SUPER_ADMIN_OBCREW
+  SUPER_ADMIN_OBPARK
+  VENDOR
+}
+
+enum KycStatus {
+  PENDING
+  DRAFT
+  DOCUMENTS_PENDING
+  UNDER_REVIEW
+  ACTION_REQUIRED
+  APPROVED
+  REJECTED
+}
+
+enum ServiceType {
+  DRIVER
+  MECHANIC
+
+  @@map("CrewServiceType")
+}
+
+enum DocumentType {
+  PAN
+  SKILL_CERTIFICATE
+  BANK_PASSBOOK
+  AADHAAR
+  DRIVING_LICENSE
+  TRADE_SKILL_CERTIFICATE
+  WORKSHOP_REGISTRATION
+  COMMERCIAL_INSURANCE
+  PROFILE_PHOTO
+}
+
+enum DocReviewStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  ACTION_REQUIRED
+}
+
+// LEGACY ADMIN USERS TABLE 
+model User { 
   id           String    @id @default(cuid())
   email        String    @unique
-  name         String
-  passwordHash String
+  name         String    @default("")
+  firstName    String?   @default("")
+  lastName     String?   @default("")
+  passwordHash String    @default("")
   phone        String?
   role         Role      @default(CUSTOMER)
   isVerified   Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  addresses    Address[]
-  cart         Cart?
-  orders       Order[]
+  // addresses Address[]
+  // cart Cart?
+  // orders Order[]
   sessions     Session[]
-  vehicles     Vehicle[]
+  // vehicles     Vehicle[]
 }
 
 model Session {
@@ -33,253 +104,176 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Address {
-  id        String   @id @default(cuid())
-  userId    String
-  label     String
-  line1     String
-  line2     String?
-  city      String
-  state     String
-  pincode   String
-  isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders    Order[]
+model Users {
+  id               String    @id @default(uuid())
+  firebaseUid      String?   @unique   // <-- NEW: added to match Firebase accounts for google login
+  phoneNumber      String?   @unique // <-- MODIFIED: Adding '?' (making  it optional for Google users)
+  email            String?   @unique
+  firstName        String?
+  lastName         String?
+  address          String?
+  dob              DateTime?
+  gender           Gender?
+  profileImage     String?
+  updates          Boolean    @default(false)
+  emergencyContact String?
+  pushNotifications Boolean   @default(true)
+  smsUpdates       Boolean    @default(true)
+  promotionalUpdates Boolean  @default(false)
+  isActive         Boolean    @default(true)
+  role             Role       @default(CUSTOMER)
+  passwordHash     String?
+  city             String?
+  refreshTokenHash String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  crewProfile CrewProfile?
+  verifiedDocuments CrewDocument[] @relation("DocumentVerifier")
+  reviewedCrewProfiles CrewProfile[] @relation("CrewProfileReviewer")
+  orders      Order[]
+  payments  Payment[]
+  cart      Cart?
+  addresses Address[]
+  cars      CustomerCar[]
+  customerBookings Booking[] @relation("CustomerBookings")
+  savedCards     CustomerSavedCard[]
+  savedVehicles  CustomerVehicle[]
+
+  @@index([role])
 }
 
-model Vehicle {
-  id                   String                @id @default(cuid())
-  userId               String
-  vrn                  String
-  make                 String
-  model                String
-  year                 Int
-  fuelType             FuelType              @default(PETROL)
-  colour               String?
-  isActive             Boolean               @default(true)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  cartItems            CartItem[]
-  rcLookup             RcLookup?
-  rechargeTransactions RechargeTransaction[]
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+model CrewProfile {
+  id                 String          @id @default(uuid())
+  userId             String          @unique
+  user               Users           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String?
+  profilePhotoUrl    String?
+  avgRating          Decimal  @default(0) @db.Decimal(3, 2)
+  totalJobsCompleted Int      @default(0)
+  serviceType        ServiceType
+  kycStatus          KycStatus       @default(DRAFT)
+  bankAccountNumber  String?
+  bankIfscCode       String?
+  bankAccountName    String?
+  isOnline           Boolean         @default(false)
+  isBusy             Boolean         @default(false)
+  submittedAt        DateTime?
+  verifiedAt         DateTime?
+  reviewedById        String?
+  reviewedBy          Users?          @relation("CrewProfileReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  rejectionReason    String?
+  documents          CrewDocument[]
+  bookings           Booking[]       @relation("CrewBookings")
+  earnings           CrewEarning[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
-  @@unique([userId, vrn])
-  @@index([vrn])
+  @@index([kycStatus])
+  @@index([isOnline, isBusy])
+  @@index([reviewedById])
 }
 
-model RcLookup {
-  id              String    @id @default(cuid())
-  vehicleId       String    @unique
-  vrn             String    @unique
-  rawData         Json
-  insuranceExpiry DateTime?
-  puccExpiry      DateTime?
-  fitnessExpiry   DateTime?
-  challanCount    Int       @default(0)
-  fastagActive    Boolean   @default(false)
-  healthScore     Int       @default(0)
-  fetchedAt       DateTime  @default(now())
-  expiresAt       DateTime
-  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+model CrewDocument {
+  id              String          @id @default(uuid())
+  crewProfileId   String
+  crewProfile     CrewProfile     @relation(fields: [crewProfileId], references: [id], onDelete: Cascade)
+  docType         DocumentType
+  fileUrl         String
+  docUrl          String?         @db.Text
+  status          DocReviewStatus @default(PENDING)
+  rejectionReason String?
+  isLocked        Boolean         @default(false)
+  verifiedById    String?
+  verifiedBy      Users?          @relation("DocumentVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  @@index([vrn])
+  @@unique([crewProfileId, docType])
+  @@index([status])
+  @@index([verifiedById])
 }
 
-model Category {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  imageUrl    String?
-  parentId    String?
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryTree")
-  products    Product[]
+//// BOOKINGS TABLES ---------------------------------------
+
+enum BookingStatus {
+  PENDING             // Customer created request, waiting for crew
+  ACCEPTED            // Crew accepted request
+  ARRIVED             // Crew arrived at location
+  IN_PROGRESS         // Crew started trip/job with OTP
+  COMPLETED           // Job finished
+  CANCELLED           // Cancelled by customer or crew
 }
 
-model Product {
-  id            String      @id @default(cuid())
-  name          String
-  slug          String      @unique
-  description   String?
-  categoryId    String
-  basePrice     Decimal     @db.Decimal(10, 2)
-  images        String[]
-  compatibility Json
-  isActive      Boolean     @default(true)
-  stock         Int         @default(0)
-  sku           String      @unique
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  category      Category    @relation(fields: [categoryId], references: [id])
-  variants      Variant[]
-  reviews Review[]
+model Booking {
+  id              String        @id @default(uuid())
+  bookingCode     String        @unique // e.g. "OB-2026-0001"
+  customerId      String
+  customer        Users         @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
 
-  @@index([slug])
-  @@index([categoryId])
-}
+  crewProfileId   String?
+  crewProfile     CrewProfile?  @relation("CrewBookings", fields: [crewProfileId], references: [id], onDelete: SetNull)
 
-model Variant {
-  id        String   @id @default(cuid())
-  productId String
-  name      String
-  price     Decimal  @db.Decimal(10, 2)
-  stock     Int      @default(0)
-  sku       String   @unique
-  createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
+  serviceType     ServiceType
+  status          BookingStatus @default(PENDING)
 
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-}
+  pickupAddress   String
+  pickupLat       Decimal       @db.Decimal(10, 7)
+  pickupLng       Decimal       @db.Decimal(10, 7)
 
-model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  productId String
-  vehicleId String?
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id])
-  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  dropoffAddress  String?
+  dropoffLat      Decimal?      @db.Decimal(10, 7)
+  dropoffLng      Decimal?      @db.Decimal(10, 7)
 
-  @@unique([cartId, productId, vehicleId])
-}
+  distanceKm      Decimal?      @db.Decimal(6, 2)
+  durationMinutes Int?
+  estimatedFare   Decimal       @db.Decimal(10, 2)
+  finalFare       Decimal?      @db.Decimal(10, 2)
 
-model Order {
-  id         String      @id @default(cuid())
-  userId     String
-  addressId  String
-  status     OrderStatus @default(PENDING)
-  subtotal   Decimal     @db.Decimal(10, 2)
-  discount   Decimal     @default(0) @db.Decimal(10, 2)
-  total      Decimal     @db.Decimal(10, 2)
-  couponCode String?
-  notes      String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  address    Address     @relation(fields: [addressId], references: [id])
-  user       User        @relation(fields: [userId], references: [id])
-  items      OrderItem[]
-  payment    Payment?
+  startOtp        String        // 4-digit start OTP
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelReason    String?
 
-  @@index([userId])
+  rating          BookingRating?
+  earning         CrewEarning?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([crewProfileId])
   @@index([status])
 }
 
-model OrderItem {
-  id          String  @id @default(cuid())
-  orderId     String
-  productId   String
-  productName String
-  productSku  String
-  unitPrice   Decimal @db.Decimal(10, 2)
-  quantity    Int
-  total       Decimal @db.Decimal(10, 2)
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product @relation(fields: [productId], references: [id])
+model BookingRating {
+  id              String   @id @default(uuid())
+  bookingId       String   @unique
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ratingStars     Int      // 1 to 5
+  feedbackComment String?
+  createdAt       DateTime @default(now())
 }
 
-model Payment {
-  id                String        @id @default(cuid())
-  orderId           String        @unique
-  razorpayOrderId   String        @unique
-  razorpayPaymentId String?
-  amount            Decimal       @db.Decimal(10, 2)
-  status            PaymentStatus @default(PENDING)
-  idempotencyKey    String        @unique
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  order             Order         @relation(fields: [orderId], references: [id])
+model CrewEarning {
+  id              String      @id @default(uuid())
+  bookingId       String      @unique
+  booking         Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  crewProfileId   String
+  crewProfile     CrewProfile @relation(fields: [crewProfileId], references: [id], onDelete: Cascade)
 
-  @@index([razorpayOrderId])
+  totalFare       Decimal     @db.Decimal(10, 2)
+  platformFee     Decimal     @db.Decimal(10, 2) // e.g. 15%
+  netEarnings     Decimal     @db.Decimal(10, 2) // e.g. 85%
+  isPaidOut       Boolean     @default(false)
+  paidOutAt       DateTime?
+
+  createdAt       DateTime    @default(now())
+
+  @@index([crewProfileId])
 }
 
-model RechargeTransaction {
-  id                String         @id @default(cuid())
-  vehicleId         String
-  vrn               String
-  amount            Decimal        @db.Decimal(10, 2)
-  razorpayOrderId   String         @unique
-  razorpayPaymentId String?
-  status            RechargeStatus @default(PENDING)
-  idempotencyKey    String         @unique
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  vehicle           Vehicle        @relation(fields: [vehicleId], references: [id])
-
-  @@index([vrn])
-  @@index([vehicleId])
-}
-
-model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String
-  action     String
-  entityId   String?
-  entityType String?
-  metadata   Json?
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@index([entityType, entityId])
-}
-
-model Coupon {
-  id            String       @id @default(cuid())
-  code          String       @unique
-  description   String?
-  discountType  DiscountType @default(FLAT)
-  discountValue Decimal      @db.Decimal(10, 2)
-  minOrderValue Decimal?     @db.Decimal(10, 2)
-  maxUses       Int?
-  usedCount     Int          @default(0)
-  isActive      Boolean      @default(true)
-  expiresAt     DateTime?
-  createdAt     DateTime     @default(now())
-
-  @@index([code])
-}
-
-model Review {
-  id           String       @id @default(cuid())
-  productId    String
-  customerName String
-  rating       Int
-  comment      String
-  status       ReviewStatus @default(PENDING)
-  createdAt    DateTime     @default(now())
-
-  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@index([status])
-}
-
-enum ReviewStatus {
-  PUBLISHED
-  PENDING
-  REJECTED
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
-}
-
+//// PAYMENTS - ORDETS - CHECKOUT TABLES --------------------------
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -292,26 +286,357 @@ enum OrderStatus {
 
 enum PaymentStatus {
   PENDING
-  CAPTURED
+  SUCCESS
   FAILED
+  CANCELLED
   REFUNDED
 }
 
-enum FuelType {
-  PETROL
-  DIESEL
-  ELECTRIC
-  CNG
-  HYBRID
+enum PaymentGateway {
+  RAZORPAY
+  PAYU
 }
 
-enum RechargeStatus {
-  PENDING
-  SUCCESS
-  FAILED
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  EMI
+  PAY_LATER
+  UNKNOWN
+}
+  
+model Order {
+  id          String @id @default(uuid())
+  orderNumber String @unique
+  userId      String
+  user        Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subtotal       Decimal @db.Decimal(10, 2)
+  discount       Decimal @default(0) @db.Decimal(10, 2)
+  tax            Decimal @default(0) @db.Decimal(10, 2)
+  shippingCharge Decimal @default(0) @db.Decimal(10, 2)
+  totalAmount    Decimal @db.Decimal(10, 2)
+  currency       String  @default("INR")
+  status         OrderStatus @default(PENDING)
+  shippingAddress Json?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
+  payments       Payment[]  
+  @@index([userId])
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  productName String
+  productImage String?
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  @@index([orderId])
+}
+
+model Payment {
+  id       String         @id @default(uuid())
+  orderId  String
+  order    Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId   String
+  user     Users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gateway  PaymentGateway
+  amount   Decimal        @db.Decimal(10, 2)
+  currency String         @default("INR")
+  status   PaymentStatus  @default(PENDING)
+
+  gatewayOrderId String? @unique
+  gatewayPaymentId String?
+  transactionId String?
+  gatewaySignature String?
+  paymentMethod PaymentMethod @default(UNKNOWN)
+  failureReason String?
+  paidAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  attempts PaymentAttempt[]
+
+  @@index([orderId])
+  @@index([userId])
+}
+
+model PaymentAttempt {
+  id String @id @default(uuid())
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  status PaymentStatus
+  paymentMethod PaymentMethod
+  gatewayTransactionId String?
+  failureReason String?
+  createdAt DateTime @default(now())
+  @@index([paymentId])
+}
+
+model InvestorRequest {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  phoneNumber String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model newsletterSubscription {
+  id              String   @id @default(uuid())
+  firstName       String
+  lastName        String
+  email           String   @unique
+  isNewsletterSub Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Messages {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+//// HSN and SAC master table  ----------------------------------
+model TaxMaster {
+  code        String   @id // e.g., "8714" or "9968"
+  description String
+  type        String   // "HSN" for products, "SAC" for platform/shipping fees
+  gstRate     Decimal  @db.Decimal(5, 2) // e.g., 18.00
+
+  products    Product[]
+}
+
+
+model Category {
+  id               String    @id @default(uuid())
+  categoryName     String
+  slug             String    @unique
+  imagePath        String?
+  shortDescription String?
+  products         Product[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Product {
+  id                  String     @id @default(uuid())
+  productId           String     @unique // e.g. "OB-CAR-001"
+  productHeading      String?
+  productName         String
+  title               String?
+  brand               String     @default("OBPARK")
+  productDescription  String?
+  longDescription     String?
+  productFeatures     String[]   // split by semicolon (;)
+
+  productCost         Decimal    @db.Decimal(10, 2) // base cost or cost price of product without gst
+  price               Decimal    @db.Decimal(10, 2) // final consumer selling price (inclusive of GST)
+  platformCharges     Decimal    @default(0.00) @db.Decimal(10, 2)
+  discountCoupon      String?
+  currencySymbol      String     @default("₹")
+
+  taxCode             String?
+  tax                 TaxMaster? @relation(fields: [taxCode], references: [code])
+  gst                 Decimal?   @db.Decimal(10, 2)
+  gstRate             Decimal?   @db.Decimal(5, 2)  // GST slab percentage (e.g., 5, 12, 18, 28)
+  hsnCode             String?    // HSN code for goods (e.g., "8714", "8708")
+
+  imagePath           String?    // FOR MAIN IMAGE URL OUT OF ALL IMAGES
+  images              String[]   // array of image URLs
+  galleryImages       String[]
+  discountText        String?
+  productRating       Float      @default(0.0) // e.g. 4.5 (product average rating)
+  averageRating       Float?     @default(0.0)
+  totalReviewsCount   Int        @default(0)
+  boughtPastMonthText String?
+  soldLastWeekText    String?
+
+  categoryId          String
+  category            Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  attributes          Json?
+  aboutSections       Json?
+  shippingInformation String?
+  shippingBadges      String[]
+  reviewsBreakdown    Json?
+  reviews             Review[]
+
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([categoryId])
+  @@index([taxCode])
+  @@index([hsnCode])
+  @@index([price])
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      Users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+} 
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  quantity  Int      @default(1)
+  color     String?
+  size      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, color, size])
+}
+
+// User's Shipping Details and Address Table --------------------------------------------------------------
+
+model Address {
+  id             String        @id @default(uuid())
+  userId         String
+  user           Users         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label          AddressLabel  @default(HOME)
+  country        String        @default("India")
+  firstName      String
+  lastName       String
+  phoneNumber    String
+  email          String?
+  streetAddress  String        @default("")
+  apartmentSuite String?
+  city           String
+  zipCode        String
+  isDefault      Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  latitude       Decimal?      @db.Decimal(10, 7) //dont use it for now 
+  longitude      Decimal?      @db.Decimal(10, 7) //dont use it for now
+
+  @@index([userId])
+}
+
+
+enum AddressLabel {
+  HOME
+  WORK
+  OTHER
+}
+
+model CustomerCar {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registrationNumber String
+  ownerName          String?
+  maker              String?
+  model              String?
+  fuelType           String?
+  vehicleCategory    String?
+  registrationDate   String?
+  insuranceValidTill String?
+  fitnessValidTill   String?
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, registrationNumber])
+  @@index([userId])
+}
+
+model CustomerSavedCard {
+  id             String   @id @default(uuid())
+  userId         String
+  user           Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cardholderName String
+  cardBrand      String
+  cardLast4      String
+  expiryMonth    Int
+  expiryYear     Int
+  gatewayToken   String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+//// BLUEPRINT CUSTOMER MODELS -------------------------------
+model CustomerVehicle {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  registrationNumber String
+  maker              String?
+  model              String?
+  fuelType           String?
+  nickname           String?
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, registrationNumber])
+  @@index([userId])
 }
 
 enum DiscountType {
   FLAT
   PERCENTAGE
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  PENDING
+  REJECTED
+}
+
+model Coupon {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType @default(FLAT)
+  discountValue Decimal      @db.Decimal(10, 2)
+  minOrderValue Decimal?     @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  isActive      Boolean      @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([code])
+}
+
+model Review {
+  id           String       @id @default(uuid())
+  productId    String
+  customerName String
+  rating       Int
+  comment      String
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([status])
 }

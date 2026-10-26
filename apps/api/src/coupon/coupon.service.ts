@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { DiscountType } from '@prisma/client'
 
 export interface CreateCouponDto {
   code: string
   description?: string
-  discountType: 'FLAT' | 'PERCENTAGE'
+  discountType: DiscountType
   discountValue: number
   minOrderValue?: number
   maxUses?: number
@@ -23,7 +24,7 @@ export class CouponService {
     if (coupon.minOrderValue && orderSubtotal < Number(coupon.minOrderValue)) {
       throw new BadRequestException(`Minimum order value of ₹${coupon.minOrderValue} required`)
     }
-    const discount = coupon.discountType === 'FLAT'
+    const discount = coupon.discountType === DiscountType.FLAT
       ? Math.min(Number(coupon.discountValue), orderSubtotal)
       : Math.floor((orderSubtotal * Number(coupon.discountValue)) / 100)
     return { coupon, discount, finalTotal: orderSubtotal - discount }
@@ -33,7 +34,15 @@ export class CouponService {
     const existing = await this.prisma.coupon.findUnique({ where: { code: dto.code.toUpperCase() } })
     if (existing) throw new ConflictException('Coupon code already exists')
     return this.prisma.coupon.create({
-      data: { ...dto, code: dto.code.toUpperCase(), expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null },
+      data: {
+        code: dto.code.toUpperCase(),
+        description: dto.description || null,
+        discountType: dto.discountType,
+        discountValue: dto.discountValue,
+        minOrderValue: dto.minOrderValue || null,
+        maxUses: dto.maxUses || null,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+      },
     })
   }
 

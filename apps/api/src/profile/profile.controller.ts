@@ -16,7 +16,7 @@ export class ProfileController {
   @Patch('profile')
   updateProfile(
     @CurrentUser() user: { userId: string },
-    @Body() dto: { firstName?: string; lastName?: string; phone?: string; email?: string },
+    @Body() dto: { firstName?: string; lastName?: string; phone?: string; email?: string; dob?: string; location?: string; avatarUrl?: string },
   ) {
     return this.profileService.updateProfile(user.userId, dto)
   }

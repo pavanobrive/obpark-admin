@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common'
-import { CategoryService } from './category.service'
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common'
+import { CategoryService, CreateCategoryDto, UpdateCategoryDto } from './category.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Roles } from '../auth/roles.decorator'
@@ -21,8 +21,15 @@ export class CategoryController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('admin/categories')
-  create(@Body() dto: { name: string; slug: string; description?: string; imageUrl?: string }) {
+  create(@Body() dto: CreateCategoryDto) {
     return this.categoryService.createCategory(dto)
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('admin/categories/:id')
+  update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.categoryService.updateCategory(id, dto)
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -46,7 +46,27 @@ export function CustomerTable({ customers, isLoading, selectedId, onSelect }: Cu
                   className={`border-b last:border-0 cursor-pointer hover:bg-gray-50 ${selectedId === c.id + c.name ? 'bg-green-50' : ''}`}
                 >
                   <td className="py-3 text-gray-700">{c.id}</td>
-                  <td className="py-3 text-gray-700 font-medium">{c.name}</td>
+                  <td className="py-3">
+                    <div className="flex items-center gap-2.5">
+                      {c.avatar ? (
+                        <img
+                          src={c.avatar}
+                          alt=""
+                          className="w-8 h-8 rounded-full object-cover bg-gray-100 border shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0">
+                          {c.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-gray-800 font-medium text-xs">{c.name}</p>
+                        {c.email && c.email !== '—' && (
+                          <p className="text-[11px] text-gray-400">{c.email}</p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                   <td className="py-3 text-gray-500">{c.phone}</td>
                   <td className="py-3 text-gray-700">{c.orderCount}</td>
 <td className="py-3 text-gray-700">₹{c.totalSpend.toLocaleString('en-IN')}</td>

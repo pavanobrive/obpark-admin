@@ -4,7 +4,7 @@ import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 
 interface AuthResponse {
-  user: { id: string; email: string; name: string; role: 'CUSTOMER' | 'ADMIN' }
+  user: { id: string; email: string; name: string; role: string }
   accessToken: string
 }
 

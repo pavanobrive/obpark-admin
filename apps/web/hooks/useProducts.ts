@@ -3,23 +3,41 @@ import { api } from '@/lib/api'
 
 export interface Category {
   id: string
+  categoryName?: string
   name: string
   slug: string
+  shortDescription?: string
   description?: string
+  imagePath?: string
+  imageUrl?: string
   children?: Category[]
 }
 
 export interface Product {
   id: string
-  name: string
-  slug: string
+  productId?: string
+  productName: string
+  name?: string
+  productHeading?: string
+  brand?: string
+  slug?: string
+  productDescription?: string
   description?: string
-  basePrice: number
+  longDescription?: string
+  productFeatures?: string[]
+  productCost?: number
+  basePrice?: number
+  price: number
+  platformCharges?: number
+  discountCoupon?: string
+  hsnCode?: string
+  taxCode?: string
+  gst?: number
+  gstRate?: number
+  imagePath?: string
   images: string[]
-  stock: number
-  compatibility: { make: string; model: string; yearFrom: number; yearTo: number }[]
   category: Category
-  compatibilityStatus?: 'compatible' | 'incompatible' | 'unknown'
+  shippingInformation?: string
 }
 
 export interface ProductsResponse {
@@ -44,22 +62,22 @@ export function useProducts(filters: Record<string, string | number | undefined>
   })
   return useQuery({
     queryKey: ['products', filters],
-    queryFn: () => api.get<ProductsResponse>(`/products?${params.toString()}`),
+    queryFn: () => api.get<ProductsResponse>(`/admin/products?${params.toString()}`),
   })
 }
 
 export function useFeaturedProducts() {
   return useQuery({
     queryKey: ['products', 'featured'],
-    queryFn: () => api.get<Product[]>('/products/featured'),
+    queryFn: () => api.get<Product[]>('/admin/products?limit=6'),
     staleTime: 1000 * 60 * 5,
   })
 }
 
-export function useProduct(slug: string, vrn?: string) {
+export function useProduct(idOrSlug: string) {
   return useQuery({
-    queryKey: ['product', slug, vrn],
-    queryFn: () => api.get<Product>(`/products/${slug}${vrn ? `?vrn=${vrn}` : ''}`),
-    enabled: !!slug,
+    queryKey: ['product', idOrSlug],
+    queryFn: () => api.get<Product>(`/admin/products/${idOrSlug}`),
+    enabled: !!idOrSlug,
   })
 }
