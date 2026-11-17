@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, Res, Req, UseGuards } from '@nestjs/common'
+import { Controller, Post, Patch, Body, Res, Req, UseGuards, UnauthorizedException } from '@nestjs/common'
 import type { Response, Request } from 'express'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
@@ -32,7 +32,7 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies?.refreshToken
     if (!refreshToken) {
-      return { user: null, accessToken: null }
+      throw new UnauthorizedException('No refresh token provided')
     }
     const result = await this.authService.refresh(refreshToken)
     this.setRefreshCookie(res, result.refreshToken)
@@ -43,7 +43,8 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const refreshToken = req.cookies?.refreshToken
     if (refreshToken) await this.authService.logout(refreshToken)
-    res.clearCookie('refreshToken')
+    res.clearCookie('refreshToken', { path: '/' })
+    res.clearCookie('admin_session', { path: '/' })
     return { success: true }
   }
 
@@ -57,11 +58,20 @@ export class AuthController {
   }
 
   private setRefreshCookie(res: Response, token: string) {
+    const isProd = process.env.NODE_ENV === 'production'
     res.cookie('refreshToken', token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProd,
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    })
+    res.cookie('admin_session', 'true', {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: isProd,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
     })
   }
 }

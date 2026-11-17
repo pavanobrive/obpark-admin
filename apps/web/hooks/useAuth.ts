@@ -8,7 +8,7 @@ interface AuthResponse {
   accessToken: string
 }
 
-export function useLogin() {
+export function useLogin(options?: { onSuccess?: (data: AuthResponse) => void }) {
   const setAuth = useAuthStore((s) => s.setAuth)
   const router = useRouter()
 
@@ -17,7 +17,11 @@ export function useLogin() {
       api.post<AuthResponse>('/auth/login', data),
     onSuccess: (res) => {
       setAuth(res.user, res.accessToken)
-      router.push('/admin')
+      if (options?.onSuccess) {
+        options.onSuccess(res)
+      } else {
+        router.push('/admin')
+      }
     },
   })
 }

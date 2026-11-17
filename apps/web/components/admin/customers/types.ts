@@ -22,4 +22,5 @@ export interface Customer {
   totalSpend: number
   status: 'Active' | 'Inactive' | 'VIP'
   addresses?: CustomerAddress[]
+  createdAt?: string | Date
 }

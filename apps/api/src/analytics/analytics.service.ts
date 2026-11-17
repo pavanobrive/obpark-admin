@@ -31,7 +31,48 @@ export class AnalyticsService {
     }))
   }
 
-  async getRevenueTrend(days = 7) {
+  async getRevenueTrend(year?: number, month?: number, days = 7) {
+    if (year !== undefined && month !== undefined) {
+      // Month is 1-indexed (1 to 12)
+      const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
+      const endDate = new Date(year, month, 1, 0, 0, 0, 0)
+      const daysInMonth = new Date(year, month, 0).getDate()
+
+      const orders = await this.prisma.order.findMany({
+        where: {
+          createdAt: { gte: startDate, lt: endDate },
+          status: { in: REVENUE_STATUSES },
+        },
+        select: { createdAt: true, totalAmount: true },
+      })
+
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const buckets: Record<number, number> = {}
+      const orderCountBuckets: Record<number, number> = {}
+      for (let i = 1; i <= daysInMonth; i++) {
+        buckets[i] = 0
+        orderCountBuckets[i] = 0
+      }
+
+      orders.forEach((o) => {
+        const d = new Date(o.createdAt).getDate()
+        if (buckets[d] !== undefined) {
+          buckets[d] += Number(o.totalAmount)
+          orderCountBuckets[d] += 1
+        }
+      })
+
+      return Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1
+        return {
+          day: `${day}`,
+          dateLabel: `${monthNames[month - 1]} ${day}`,
+          value: buckets[day],
+          ordersCount: orderCountBuckets[day],
+        }
+      })
+    }
+
     const since = new Date()
     since.setDate(since.getDate() - days)
 

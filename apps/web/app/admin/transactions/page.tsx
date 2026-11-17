@@ -1,33 +1,261 @@
 'use client'
 
-import { useState } from 'react'
-import { MoreVertical, Search, Filter, ArrowUpDown, MoreHorizontal, Plus } from 'lucide-react'
+import { useState, useMemo, useRef, useCallback } from 'react'
+import {
+  MoreVertical,
+  Search,
+  Filter,
+  ArrowUpDown,
+  MoreHorizontal,
+  Plus,
+  Download,
+} from 'lucide-react'
+import {
+  ColDef,
+  ModuleRegistry,
+  AllCommunityModule,
+  themeQuartz,
+  GridReadyEvent,
+} from 'ag-grid-community'
+import { AgGridReact, CustomCellRendererProps } from 'ag-grid-react'
 import { microgrammaBold } from '@/lib/fonts'
 import { Header } from '@/components/admin/layout/Header'
 import { useTransactions, useTransactionSummary } from '@/hooks/useTransactions'
 
+// Register all Community features
+ModuleRegistry.registerModules([AllCommunityModule])
+
+// Custom AG Grid theme matching OBPARK branding
+const obparkGridTheme = themeQuartz.withParams({
+  accentColor: '#074139',
+  headerBackgroundColor: '#F0FDF4',
+  headerTextColor: '#374151',
+  headerFontWeight: 600,
+  headerFontSize: 11.5,
+  fontSize: 11.5,
+  borderColor: '#E5E7EB',
+  borderRadius: 12,
+  browserColorScheme: 'light',
+  rowHoverColor: '#F9FAFB',
+  selectedRowBackgroundColor: '#ECFDF5',
+  rowHeight: 48,
+  headerHeight: 36,
+})
+
 const TABS = ['All order', 'Complete', 'Pending', 'Failed']
 
-const STATUS_STYLE: Record<string, string> = {
-  Complete: 'text-green-600', Pending: 'text-amber-600', Failed: 'text-red-500',
-}
-
-const STATUS_DOT: Record<string, string> = {
-  Complete: 'bg-green-500', Pending: 'bg-amber-500', Failed: 'bg-red-500',
+interface TransactionItem {
+  id: string
+  customerId?: string
+  name: string
+  date: string
+  total: number
+  method: string
+  status: string
 }
 
 export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState('All order')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [showFloatingFilters, setShowFloatingFilters] = useState(false)
+  const gridRef = useRef<AgGridReact<TransactionItem>>(null)
 
   const { data: summary } = useTransactionSummary()
   const { data, isLoading, isError } = useTransactions()
-  const transactions = data?.transactions ?? []
+  const transactions = (data?.transactions ?? []) as TransactionItem[]
 
-  const filtered = transactions
-    .filter((t) => activeTab === 'All order' || t.status === activeTab)
-    .filter((t) => t.name?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = useMemo(() => {
+    return transactions
+      .filter((t) => activeTab === 'All order' || t.status === activeTab)
+      .filter((t) => !search.trim() || t.name?.toLowerCase().includes(search.toLowerCase()))
+  }, [transactions, activeTab, search])
+
+  const handleExportCsv = useCallback(() => {
+    gridRef.current?.api.exportDataAsCsv({
+      fileName: `obpark_transactions_${new Date().toISOString().slice(0, 10)}.csv`,
+    })
+  }, [])
+
+  // Cell Renderers with strict Y-axis vertical centering
+  const CustomerIdCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const t = props.data
+    const id = t?.customerId?.slice(0, 8) ?? '—'
+    return (
+      <div className="flex items-center w-full h-full">
+        <span className="font-mono text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 truncate">
+          {id}
+        </span>
+      </div>
+    )
+  }, [])
+
+  const NameCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const name = props.value || '—'
+    return (
+      <div className="flex items-center w-full h-full font-semibold text-gray-800 text-sm truncate" title={name}>
+        {name}
+      </div>
+    )
+  }, [])
+
+  const DateCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const val = props.value
+    const d = val ? new Date(val).toLocaleDateString('en-IN') : '—'
+    return (
+      <div className="flex items-center w-full h-full text-gray-600 font-mono text-sm">
+        {d}
+      </div>
+    )
+  }, [])
+
+  const TotalCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const num = Number(props.value ?? 0)
+    return (
+      <div className="flex items-center w-full h-full font-bold text-gray-800 font-mono text-sm">
+        ₹{num.toLocaleString('en-IN')}
+      </div>
+    )
+  }, [])
+
+  const MethodCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const m = props.value || '—'
+    return (
+      <div className="flex items-center w-full h-full text-gray-700 text-sm">
+        {m}
+      </div>
+    )
+  }, [])
+
+  const StatusCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    const status = props.value || 'Pending'
+    const isComplete = status === 'Complete'
+    const isPending = status === 'Pending'
+
+    const dotColor = isComplete
+      ? 'bg-emerald-500'
+      : isPending
+      ? 'bg-amber-500'
+      : 'bg-rose-500'
+
+    const badgeStyle = isComplete
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : isPending
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : 'bg-rose-50 text-rose-700 border-rose-200'
+
+    return (
+      <div className="flex items-center w-full h-full">
+        <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-semibold border ${badgeStyle}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+          {status}
+        </span>
+      </div>
+    )
+  }, [])
+
+  const ActionCellRenderer = useCallback((props: CustomCellRendererProps<TransactionItem>) => {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <button
+          onClick={() => {}}
+          className="text-[#074139] hover:text-[#052e28] text-xs font-semibold hover:underline"
+          type="button"
+        >
+          View Details
+        </button>
+      </div>
+    )
+  }, [])
+
+  const colDefs = useMemo<ColDef<TransactionItem>[]>(() => {
+    return [
+      {
+        headerName: 'Customer Id',
+        field: 'customerId',
+        flex: 1.1,
+        minWidth: 120,
+        cellRenderer: CustomerIdCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agTextColumnFilter',
+      },
+      {
+        headerName: 'Name',
+        field: 'name',
+        flex: 1.5,
+        minWidth: 150,
+        cellRenderer: NameCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agTextColumnFilter',
+      },
+      {
+        headerName: 'Date',
+        field: 'date',
+        flex: 1,
+        minWidth: 110,
+        cellRenderer: DateCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agDateColumnFilter',
+      },
+      {
+        headerName: 'Total',
+        field: 'total',
+        flex: 1.1,
+        minWidth: 110,
+        cellRenderer: TotalCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agNumberColumnFilter',
+      },
+      {
+        headerName: 'Method',
+        field: 'method',
+        flex: 1.1,
+        minWidth: 110,
+        cellRenderer: MethodCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agTextColumnFilter',
+      },
+      {
+        headerName: 'Status',
+        field: 'status',
+        flex: 1.1,
+        minWidth: 115,
+        cellRenderer: StatusCellRenderer,
+        cellClass: 'flex items-center',
+        filter: 'agTextColumnFilter',
+      },
+      {
+        headerName: 'Action',
+        width: 110,
+        pinned: 'right',
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellClass: 'flex items-center justify-center',
+        headerClass: 'text-center',
+        cellRenderer: ActionCellRenderer,
+      },
+    ]
+  }, [
+    CustomerIdCellRenderer,
+    NameCellRenderer,
+    DateCellRenderer,
+    TotalCellRenderer,
+    MethodCellRenderer,
+    StatusCellRenderer,
+    ActionCellRenderer,
+  ])
+
+  const defaultColDef = useMemo<ColDef>(
+    () => ({
+      sortable: true,
+      filter: true,
+      resizable: true,
+      floatingFilter: showFloatingFilters,
+      cellClass: 'flex items-center',
+    }),
+    [showFloatingFilters]
+  )
 
   const kpis = [
     { label: 'Total Revenue', value: summary ? `₹${summary.totalRevenue.toLocaleString('en-IN')}` : '—' },
@@ -47,7 +275,7 @@ export default function TransactionsPage() {
             {kpis.map((k) => (
               <div key={k.label} className="bg-white border rounded-xl p-5 shadow-md">
                 <div className="flex items-start justify-between">
-                  <p className={`${microgrammaBold.className} text-[16px] font-semibold text-gray-700`}>{k.label}</p>
+                  <p className={`${microgrammaBold.className} text-[1rem] font-semibold text-gray-700`}>{k.label}</p>
                   <MoreVertical className="h-4 w-4 text-gray-300" />
                 </div>
                 <p className="text-2xl font-bold text-gray-800 mt-1">{k.value}</p>
@@ -58,7 +286,7 @@ export default function TransactionsPage() {
           {/* Payment Method card */}
           <div className="bg-white border rounded-xl p-5 shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <p className={`${microgrammaBold.className} font-semibold text-gray-800 text-[16px]`}>Payment Method</p>
+              <p className={`${microgrammaBold.className} font-semibold text-gray-800 text-[1rem]`}>Payment Method</p>
               <MoreVertical className="h-4 w-4 text-gray-300" />
             </div>
             <div className="rounded-xl p-4 text-white mb-3" style={{ background: 'linear-gradient(135deg, #074139, #0f6b5c)' }}>
@@ -69,15 +297,46 @@ export default function TransactionsPage() {
                 <span>Active</span>
               </div>
             </div>
-            <button className={`${microgrammaBold.className} w-full py-2 rounded-lg border text-[14px] text-gray-600 flex items-center justify-center gap-1.5`}>
+            <button className="w-full py-2 rounded-lg border text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5">
               <Plus className="h-4 w-4" /> Add Payment Method
             </button>
           </div>
         </div>
 
         {/* Filter tabs + table */}
-        <div className="bg-white border rounded-xl p-4 shadow-md">
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="bg-white border rounded-xl p-4 shadow-md space-y-4">
+          {/* Scoped CSS enforcing vertical Y-axis centering */}
+          <style>{`
+            .ag-grid-transactions .ag-cell {
+              display: flex !important;
+              align-items: center !important;
+            }
+            .ag-grid-transactions .ag-cell-wrapper {
+              display: flex !important;
+              align-items: center !important;
+              height: 100% !important;
+              width: 100% !important;
+            }
+            .ag-grid-transactions .ag-cell-value {
+              display: flex !important;
+              align-items: center !important;
+              height: 100% !important;
+              width: 100% !important;
+            }
+            .ag-grid-transactions .ag-react-container {
+              display: flex !important;
+              align-items: center !important;
+              height: 100% !important;
+              width: 100% !important;
+            }
+            .ag-grid-transactions .ag-header-cell-label {
+              display: flex !important;
+              align-items: center !important;
+              height: 100% !important;
+            }
+          `}</style>
+
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex bg-gray-50 rounded-lg p-1 text-sm overflow-x-auto">
               {TABS.map((tab) => (
                 <button
@@ -93,72 +352,73 @@ export default function TransactionsPage() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative hidden sm:block">
+              <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search payment history"
-                  className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-48"
+                  placeholder="Search payment history..."
+                  className="pl-8 pr-2 py-1.5 rounded-lg bg-gray-50 border text-xs outline-none w-48 focus:border-[#074139]"
                 />
               </div>
-              <button className="p-2 rounded-lg border text-gray-500"><Filter className="h-4 w-4" /></button>
-              <button className="p-2 rounded-lg border text-gray-500"><ArrowUpDown className="h-4 w-4" /></button>
-              <button className="p-2 rounded-lg border text-gray-500"><MoreHorizontal className="h-4 w-4" /></button>
+
+              <button
+                onClick={() => setShowFloatingFilters((prev) => !prev)}
+                className={`p-2 rounded-lg border text-gray-500 hover:bg-gray-50 transition-colors ${
+                  showFloatingFilters ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : ''
+                }`}
+                title="Toggle column filters"
+                type="button"
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+
+              <button
+                onClick={handleExportCsv}
+                disabled={!filtered.length}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                title="Export transactions to CSV"
+                type="button"
+              >
+                <Download className="h-3.5 w-3.5" />
+                CSV
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500 border-b">
-                  <th className="pb-3 font-medium">Customer Id</th>
-                  <th className="pb-3 font-medium">Name</th>
-                  <th className="pb-3 font-medium">Date</th>
-                  <th className="pb-3 font-medium">Total</th>
-                  <th className="pb-3 font-medium">Method</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr><td colSpan={7} className="py-6 text-center text-gray-400">Loading transactions...</td></tr>
-                )}
-                {isError && (
-                  <tr><td colSpan={7} className="py-6 text-center text-red-500">Failed to load transactions</td></tr>
-                )}
-                {!isLoading && !isError && filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-6 text-center text-gray-400">No transactions found</td></tr>
-                )}
-                {filtered.map((t) => (
-                  <tr key={t.id} className="border-b last:border-0">
-                    <td className="py-3 text-gray-700">{t.customerId?.slice(0, 8) ?? '—'}</td>
-                    <td className="py-3 text-gray-700 font-medium">{t.name}</td>
-                    <td className="py-3 text-gray-500">{new Date(t.date).toLocaleDateString('en-IN')}</td>
-                    <td className="py-3 text-gray-700">₹{Number(t.total).toLocaleString('en-IN')}</td>
-                    <td className="py-3 text-gray-600">{t.method}</td>
-                    <td className="py-3">
-                      <span className="flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[t.status] ?? 'bg-gray-400'}`} />
-                        <span className={STATUS_STYLE[t.status] ?? 'text-gray-500'}>{t.status}</span>
-                      </span>
-                    </td>
-                    <td className="py-3"><button className="text-blue-500 text-xs font-medium">View Details</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
-            <button className={`${microgrammaBold.className} text-[16px] font-bold text-[#074139] bg-white rounded-[5px] shadow-sm px-4 py-2 leading-none`}>← Previous</button>
-            <div className="flex gap-1 flex-wrap">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} className={`w-8 h-8 rounded-lg text-sm ${n === 1 ? 'text-white' : 'text-gray-500 hover:bg-gray-50'}`} style={n === 1 ? { backgroundColor: '#074139' } : {}}>{n}</button>
-              ))}
-            </div>
-            <button className={`${microgrammaBold.className} text-[16px] font-bold text-[#074139] bg-white rounded-[5px] shadow-sm px-4 py-2 leading-none`}>Next →</button>
+          <div
+            className="ag-grid-transactions w-full rounded-xl overflow-hidden border border-gray-200"
+            style={{ height: '520px' }}
+          >
+            <style jsx global>{`
+              .ag-grid-transactions .ag-cell,
+              .ag-grid-transactions .ag-cell-wrapper,
+              .ag-grid-transactions .ag-cell-value,
+              .ag-grid-transactions .ag-react-container,
+              .ag-grid-transactions .ag-header-cell-label {
+                display: flex !important;
+                align-items: center !important;
+                height: 100% !important;
+              }
+            `}</style>
+            <AgGridReact<TransactionItem>
+              ref={gridRef}
+              theme={obparkGridTheme}
+              rowData={filtered}
+              columnDefs={colDefs}
+              defaultColDef={defaultColDef}
+              quickFilterText={search}
+              pagination={true}
+              paginationPageSize={10}
+              paginationPageSizeSelector={[10, 20, 50]}
+              rowHeight={48}
+              headerHeight={36}
+              loading={isLoading}
+              animateRows={true}
+              enableCellTextSelection={true}
+              overlayNoRowsTemplate="<div class='p-8 text-center text-gray-400 text-sm'>No transactions found</div>"
+              overlayLoadingTemplate="<div class='p-8 text-center text-emerald-800 text-sm font-medium'>Loading transactions...</div>"
+            />
           </div>
         </div>
       </div>

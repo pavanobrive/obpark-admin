@@ -425,8 +425,12 @@ model Category {
   id               String    @id @default(uuid())
   categoryName     String
   slug             String    @unique
-  imagePath        String?
+  cardImage        String?   // 1. Shop page category card
+  bannerImage      String?   // 2. Category page hero banner
+  sliderImage      String?   // 3. Carousel slider ("Everything Your Car Needs")
+  imagePath        String?   // Backwards-compatible fallback (mirrors cardImage)
   shortDescription String?
+  description      String?   // Detailed category description
   products         Product[]
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

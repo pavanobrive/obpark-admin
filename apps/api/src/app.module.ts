@@ -13,11 +13,13 @@ import { ReviewModule } from './review/review.module'
 import { MediaModule } from './media/media.module'
 import { ProfileModule } from './profile/profile.module'
 import { AuthModule } from './auth/auth.module'
+import { StorageModule } from './storage/storage.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    StorageModule,
     AuthModule,
     ProfileModule,
     MediaModule,

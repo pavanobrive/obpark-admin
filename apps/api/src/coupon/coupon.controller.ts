@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common'
 import { CouponService, CreateCouponDto } from './coupon.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
@@ -30,5 +30,12 @@ export class CouponController {
   @Patch(':id/toggle')
   toggle(@Param('id') id: string) {
     return this.couponService.toggleCoupon(id)
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.couponService.deleteCoupon(id)
   }
 }

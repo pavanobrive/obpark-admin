@@ -126,3 +126,11 @@ export function useToggleCoupon() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'coupons'] }),
   })
 }
+
+export function useDeleteCoupon() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<{ success: boolean }>(`/coupons/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'coupons'] }),
+  })
+}

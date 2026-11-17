@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Search, ImageOff } from 'lucide-react'
 import { useAdminProducts } from '@/hooks/useAdminProducts'
+import { getFullImageUrl } from '@/lib/utils'
 
 export function ProductMediaGrid() {
   const { data, isLoading } = useAdminProducts()
@@ -11,7 +12,7 @@ export function ProductMediaGrid() {
   const allImages = (data?.products ?? [])
     .filter((p: any) => p.images && p.images.length > 0)
     .flatMap((p: any) => p.images.map((url: string, i: number) => ({
-      url,
+      url: getFullImageUrl(url),
       productName: p.productName || p.name || "Product",
       productId: p.id,
       key: `${p.id}-${i}`,
@@ -48,7 +49,7 @@ export function ProductMediaGrid() {
                 <a key={img.key} href={img.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square rounded-lg bg-gray-100 overflow-hidden block">
                   <img src={img.url} alt={img.productName} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 flex items-end p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-[10px] truncate">{img.productName}</p>
+                    <p className="text-white text-[0.625rem] truncate">{img.productName}</p>
                   </div>
                 </a>
               )

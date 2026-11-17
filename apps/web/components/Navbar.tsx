@@ -150,7 +150,7 @@ export function Navbar() {
                             href="/"
                             className="
                   text-[#074139]
-                  text-[10px]
+                  text-[0.625rem]
                   lg:text-xs
                   xl:text-sm
                   font-normal
@@ -166,7 +166,7 @@ export function Navbar() {
                             href="/about"
                             className="
                   text-[#074139]
-                  text-[10px]
+                  text-[0.625rem]
                   lg:text-xs
                   xl:text-sm
                   font-normal
@@ -184,7 +184,7 @@ export function Navbar() {
                                 href="/solutions"
                                 className="
                   text-[#074139]
-                  text-[10px]
+                  text-[0.625rem]
                   lg:text-xs
                   xl:text-sm
                   font-normal
@@ -202,7 +202,7 @@ export function Navbar() {
                             <span
                                 className="
                                   text-[#074139]
-                                  text-[10px]
+                                  text-[0.625rem]
                                   lg:text-xs
                                   xl:text-sm
                                   font-normal
@@ -221,21 +221,21 @@ export function Navbar() {
                                 {/* Left Column: Resource Library & E-Book */}
                                 <div className="flex-1 pr-8 border-r border-white/20 flex flex-col">
                                     <h3 className={`${microgrammaBold.className} text-white text-xl tracking-wider mb-4`}>OBRIVE RESOURCE LIBRARY</h3>
-                                    <p className={`${microgrammaBold.className} text-white/90 text-[11px] uppercase leading-[1.6] tracking-wider mb-6`}>A COLLECTION OF BLOGS, INDUSTRY INSIGHTS, AND RESOURCES SHAPING THE FUTURE OF IMMERSIVE TECHNOLOGY.</p>
+                                    <p className={`${microgrammaBold.className} text-white/90 text-[0.6875rem] uppercase leading-[1.6] tracking-wider mb-6`}>A COLLECTION OF BLOGS, INDUSTRY INSIGHTS, AND RESOURCES SHAPING THE FUTURE OF IMMERSIVE TECHNOLOGY.</p>
                                     
-                                    <a href="https://obrive.com/resources" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} text-white text-[13px] tracking-widest uppercase hover:text-[#59D0B5] transition-colors pb-6 block border-b border-white/20 mb-6`}>READ MORE</a>
+                                    <a href="https://obrive.com/resources" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} text-white text-[0.8125rem] tracking-widest uppercase hover:text-[#59D0B5] transition-colors pb-6 block border-b border-white/20 mb-6`}>READ MORE</a>
                                     
                                     <div className="flex gap-5 mt-auto">
                                         {/* E-Book Mockup */}
                                         <div className="w-[130px] shrink-0 bg-[#CAEDE5] rounded-lg p-3 flex flex-col overflow-hidden relative min-h-[160px]">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="w-2 h-4 bg-[#0b3830] rounded-full shadow-inner"></div>
-                                                <span className="text-[7px] font-semibold text-[#0b3830]">E-Book</span>
+                                                <span className="text-[0.4375rem] font-semibold text-[#0b3830]">E-Book</span>
                                             </div>
-                                            <div className="text-[#0b3830] text-[8px] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">Discover how AR,</div>
-                                            <div className="text-[#0b3830] text-[8px] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">VR, MR, and spatial</div>
-                                            <div className="text-[#0b3830] text-[8px] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">redefining industries</div>
-                                            <div className="text-[#0b3830] text-[8px] leading-tight font-medium relative z-10">worldwide.</div>
+                                            <div className="text-[#0b3830] text-[0.5rem] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">Discover how AR,</div>
+                                            <div className="text-[#0b3830] text-[0.5rem] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">VR, MR, and spatial</div>
+                                            <div className="text-[#0b3830] text-[0.5rem] leading-tight font-medium relative z-10 border-b border-[#0b3830]/10 pb-1 mb-1">redefining industries</div>
+                                            <div className="text-[#0b3830] text-[0.5rem] leading-tight font-medium relative z-10">worldwide.</div>
                                             
                                             {/* Spiral decoration placeholder */}
                                             <div className="absolute -bottom-8 -right-4 w-32 h-32 opacity-40">
@@ -249,7 +249,7 @@ export function Navbar() {
 
                                         <div className="flex flex-col justify-center">
                                             <h4 className={`${microgrammaBold.className} text-white text-xl tracking-wider mb-3`}>E-Book</h4>
-                                            <p className={`${microgrammaBold.className} text-white/90 text-[9px] uppercase leading-[1.6] tracking-wider mb-5`}>DOWNLOAD YOUR FREE E-BOOK AND DISCOVER HOW IMMERSIVE TECHNOLOGIES CAN TRANSFORM YOUR BUSINESS OPERATIONS.</p>
+                                            <p className={`${microgrammaBold.className} text-white/90 text-[0.5625rem] uppercase leading-[1.6] tracking-wider mb-5`}>DOWNLOAD YOUR FREE E-BOOK AND DISCOVER HOW IMMERSIVE TECHNOLOGIES CAN TRANSFORM YOUR BUSINESS OPERATIONS.</p>
                                             <Link href="/resources/ebook" className={`${microgrammaBold.className} text-white text-xs tracking-widest uppercase hover:text-[#59D0B5] transition-colors`}>DOWNLOAD</Link>
                                         </div>
                                     </div>
@@ -258,15 +258,15 @@ export function Navbar() {
                                 {/* Right Column: Support */}
                                 <div className="flex-1 pl-8">
                                     <h3 className={`${microgrammaBold.className} text-white text-xl tracking-wider mb-4`}>SUPPORT</h3>
-                                    <p className={`${microgrammaBold.className} text-white/90 text-[11px] uppercase leading-[1.6] tracking-wider mb-8`}>EXPERT INSIGHTS, GUIDES, AND TOOLS TO POWER IMMERSIVE INNOVATION</p>
+                                    <p className={`${microgrammaBold.className} text-white/90 text-[0.6875rem] uppercase leading-[1.6] tracking-wider mb-8`}>EXPERT INSIGHTS, GUIDES, AND TOOLS TO POWER IMMERSIVE INNOVATION</p>
                                     
                                     <div className="flex flex-col">
-                                        <a href="https://obrive.com/support/help-center" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[13px]`}>OB Help Center</a>
-                                        <a href="https://obrive.com/faq/ob-product-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[13px]`}>OB Products FAQ</a>
-                                        <a href="https://obrive.com/faq/ob-services-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[13px]`}>OB Services FAQ</a>
-                                        <a href="https://obrive.com/faq/obpark-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[13px]`}>OBPark FAQ</a>
-                                        <a href="https://obrive.com/support/change-log" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[13px]`}>Change Log</a>
-                                        <a href="https://obrive.com/legal" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-y border-white/20 tracking-wider text-[13px]`}>Legal</a>
+                                        <a href="https://obrive.com/support/help-center" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[0.8125rem]`}>OB Help Center</a>
+                                        <a href="https://obrive.com/faq/ob-product-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[0.8125rem]`}>OB Products FAQ</a>
+                                        <a href="https://obrive.com/faq/ob-services-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[0.8125rem]`}>OB Services FAQ</a>
+                                        <a href="https://obrive.com/faq/obpark-faq" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[0.8125rem]`}>OBPark FAQ</a>
+                                        <a href="https://obrive.com/support/change-log" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-t border-white/20 tracking-wider text-[0.8125rem]`}>Change Log</a>
+                                        <a href="https://obrive.com/legal" target="_blank" rel="noopener noreferrer" className={`${microgrammaBold.className} font-light text-white hover:text-[#59D0B5] transition-colors py-4 border-y border-white/20 tracking-wider text-[0.8125rem]`}>Legal</a>
                                     </div>
                                 </div>
 
@@ -291,7 +291,7 @@ export function Navbar() {
                               px-5 py-2.5
                               rounded-full
                               whitespace-nowrap
-                              text-[11px] lg:text-xs xl:text-sm
+                              text-[0.6875rem] lg:text-xs xl:text-sm
                               font-medium
                               text-white
                             "
@@ -569,7 +569,7 @@ export function Navbar() {
                                                   rounded-[16px]
                                                   px-4
                                                   py-3.5
-                                                  text-[11px]
+                                                  text-[0.6875rem]
                                                   sm:text-xs
                                                   tracking-[0.04em]
                                                   text-[#074139]
@@ -590,12 +590,12 @@ export function Navbar() {
                                                         exit={{ opacity: 0, height: 0 }}
                                                         className="flex flex-col overflow-hidden"
                                                     >
-                                                        <a href="https://obrive.com/support/help-center" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Help Center</a>
-                                                        <a href="https://obrive.com/faq/ob-product-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Products FAQ</a>
-                                                        <a href="https://obrive.com/faq/ob-services-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Services FAQ</a>
-                                                        <a href="https://obrive.com/faq/obpark-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OBPark FAQ</a>
-                                                        <a href="https://obrive.com/support/change-log" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">Change Log</a>
-                                                        <a href="https://obrive.com/legal" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[10px] sm:text-[11px] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">Legal</a>
+                                                        <a href="https://obrive.com/support/help-center" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Help Center</a>
+                                                        <a href="https://obrive.com/faq/ob-product-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Products FAQ</a>
+                                                        <a href="https://obrive.com/faq/ob-services-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OB Services FAQ</a>
+                                                        <a href="https://obrive.com/faq/obpark-faq" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">OBPark FAQ</a>
+                                                        <a href="https://obrive.com/support/change-log" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">Change Log</a>
+                                                        <a href="https://obrive.com/legal" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)} className="py-2.5 px-6 text-[0.625rem] sm:text-[0.6875rem] text-[#074139] hover:bg-[#59D0B5]/15 rounded-xl transition-colors">Legal</a>
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
@@ -613,7 +613,7 @@ export function Navbar() {
                                               px-4
                                               py-3.5
 
-                                              text-[11px]
+                                              text-[0.6875rem]
                                               sm:text-xs
                                               tracking-[0.04em]
                                               text-[#074139]

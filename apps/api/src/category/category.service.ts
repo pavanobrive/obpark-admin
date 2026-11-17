@@ -1,12 +1,16 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { StorageService } from '../storage/storage.service'
 
 export interface CreateCategoryDto {
   categoryName?: string
   name?: string
-  slug: string
+  slug?: string
   shortDescription?: string
   description?: string
+  cardImage?: string
+  bannerImage?: string
+  sliderImage?: string
   imagePath?: string
   imageUrl?: string
 }
@@ -17,13 +21,19 @@ export interface UpdateCategoryDto {
   slug?: string
   shortDescription?: string
   description?: string
+  cardImage?: string
+  bannerImage?: string
+  sliderImage?: string
   imagePath?: string
   imageUrl?: string
 }
 
 @Injectable()
 export class CategoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
 
   async getCategories() {
     const categories = await this.prisma.category.findMany({
@@ -35,19 +45,29 @@ export class CategoryService {
       },
     })
 
-    return categories.map((c) => ({
-      id: c.id,
-      categoryName: c.categoryName,
-      name: c.categoryName, // backward compatibility alias
-      slug: c.slug,
-      shortDescription: c.shortDescription,
-      description: c.shortDescription, // alias
-      imagePath: c.imagePath,
-      imageUrl: c.imagePath, // alias
-      productCount: c._count.products,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-    }))
+    return categories.map((c) => {
+      // If any image is empty or missing, fall back to bannerImage
+      const banner = c.bannerImage || c.cardImage || c.imagePath
+      const card = c.cardImage || banner
+      const slider = c.sliderImage || banner
+
+      return {
+        id: c.id,
+        categoryName: c.categoryName,
+        name: c.categoryName,
+        slug: c.slug,
+        shortDescription: c.shortDescription,
+        description: c.description || c.shortDescription,
+        cardImage: card,
+        bannerImage: banner,
+        sliderImage: slider,
+        imagePath: card,
+        imageUrl: card,
+        productCount: c._count.products,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      }
+    })
   }
 
   async getCategoryBySlug(slug: string) {
@@ -61,11 +81,19 @@ export class CategoryService {
       },
     })
     if (!category) throw new NotFoundException('Category not found')
+
+    const banner = category.bannerImage || category.cardImage || category.imagePath
+    const card = category.cardImage || banner
+    const slider = category.sliderImage || banner
+
     return {
       ...category,
       name: category.categoryName,
-      description: category.shortDescription,
-      imageUrl: category.imagePath,
+      description: category.description || category.shortDescription,
+      cardImage: card,
+      bannerImage: banner,
+      sliderImage: slider,
+      imageUrl: card,
     }
   }
 
@@ -84,20 +112,30 @@ export class CategoryService {
     const existing = await this.prisma.category.findUnique({ where: { slug } })
     if (existing) throw new ConflictException('A category with this slug already exists')
 
+    const bannerImage = dto.bannerImage || null
+    const cardImage = dto.cardImage || bannerImage || dto.imagePath || dto.imageUrl || null
+    const sliderImage = dto.sliderImage || bannerImage || cardImage || null
+    const description = dto.description || dto.shortDescription || null
+    const shortDescription = dto.shortDescription || dto.description || null
+
     const created = await this.prisma.category.create({
       data: {
         categoryName,
         slug,
-        shortDescription: dto.shortDescription || dto.description || null,
-        imagePath: dto.imagePath || dto.imageUrl || null,
+        shortDescription,
+        description,
+        cardImage,
+        bannerImage,
+        sliderImage,
+        imagePath: cardImage,
       },
     })
 
     return {
       ...created,
       name: created.categoryName,
-      description: created.shortDescription,
-      imageUrl: created.imagePath,
+      description: created.description || created.shortDescription,
+      imageUrl: created.cardImage || created.imagePath,
     }
   }
 
@@ -108,11 +146,44 @@ export class CategoryService {
     const data: any = {}
     if (dto.categoryName || dto.name) data.categoryName = dto.categoryName || dto.name
     if (dto.slug) data.slug = dto.slug
-    if (dto.shortDescription !== undefined || dto.description !== undefined) {
-      data.shortDescription = dto.shortDescription ?? dto.description
+    if (dto.description !== undefined) {
+      data.description = dto.description
     }
-    if (dto.imagePath !== undefined || dto.imageUrl !== undefined) {
-      data.imagePath = dto.imagePath ?? dto.imageUrl
+    if (dto.shortDescription !== undefined) {
+      data.shortDescription = dto.shortDescription
+    }
+    if (data.description === undefined && data.shortDescription !== undefined) {
+      data.description = data.shortDescription
+    }
+
+    // Clean up replaced individual files if new ones are uploaded
+    if (dto.cardImage !== undefined) {
+      if (category.cardImage && category.cardImage !== dto.cardImage) {
+        this.storageService.deleteFile(category.cardImage)
+      }
+      data.cardImage = dto.cardImage
+      data.imagePath = dto.cardImage
+    } else if (dto.imagePath !== undefined || dto.imageUrl !== undefined) {
+      const img = dto.imagePath ?? dto.imageUrl
+      if (category.imagePath && category.imagePath !== img) {
+        this.storageService.deleteFile(category.imagePath)
+      }
+      data.cardImage = img
+      data.imagePath = img
+    }
+
+    if (dto.bannerImage !== undefined) {
+      if (category.bannerImage && category.bannerImage !== dto.bannerImage && category.bannerImage !== category.cardImage) {
+        this.storageService.deleteFile(category.bannerImage)
+      }
+      data.bannerImage = dto.bannerImage
+    }
+
+    if (dto.sliderImage !== undefined) {
+      if (category.sliderImage && category.sliderImage !== dto.sliderImage && category.sliderImage !== category.cardImage) {
+        this.storageService.deleteFile(category.sliderImage)
+      }
+      data.sliderImage = dto.sliderImage
     }
 
     const updated = await this.prisma.category.update({
@@ -124,7 +195,7 @@ export class CategoryService {
       ...updated,
       name: updated.categoryName,
       description: updated.shortDescription,
-      imageUrl: updated.imagePath,
+      imageUrl: updated.cardImage || updated.imagePath,
     }
   }
 
@@ -133,8 +204,16 @@ export class CategoryService {
     if (!category) throw new NotFoundException('Category not found')
     const productCount = await this.prisma.product.count({ where: { categoryId: id } })
     if (productCount > 0) {
-      throw new BadRequestException(`Cannot delete — ${productCount} product(s) still use this category`)
+      throw new BadRequestException(`Cannot delete: ${productCount} product(s) still use this category. Move or delete them first.`)
     }
+
+    // Residual file and folder cleanup from disk
+    this.storageService.deleteCategoryFolder(category.slug)
+    if (category.cardImage) this.storageService.deleteFile(category.cardImage)
+    if (category.bannerImage) this.storageService.deleteFile(category.bannerImage)
+    if (category.sliderImage) this.storageService.deleteFile(category.sliderImage)
+    if (category.imagePath) this.storageService.deleteFile(category.imagePath)
+
     await this.prisma.category.delete({ where: { id } })
     return { success: true }
   }

@@ -55,4 +55,11 @@ export class CouponService {
     if (!coupon) throw new NotFoundException('Coupon not found')
     return this.prisma.coupon.update({ where: { id: couponId }, data: { isActive: !coupon.isActive } })
   }
+
+  async deleteCoupon(couponId: string) {
+    const coupon = await this.prisma.coupon.findUnique({ where: { id: couponId } })
+    if (!coupon) throw new NotFoundException('Coupon not found')
+    await this.prisma.coupon.delete({ where: { id: couponId } })
+    return { success: true, message: 'Coupon deleted successfully' }
+  }
 }

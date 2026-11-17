@@ -27,11 +27,19 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isHydrated: false,
 
-      setAuth: (user, accessToken) =>
-        set({ user, accessToken, isAuthenticated: true }),
+      setAuth: (user, accessToken) => {
+        if (typeof document !== 'undefined') {
+          document.cookie = 'admin_session=true; path=/; max-age=604800; SameSite=Lax'
+        }
+        set({ user, accessToken, isAuthenticated: true })
+      },
 
-      clearAuth: () =>
-        set({ user: null, accessToken: null, isAuthenticated: false }),
+      clearAuth: () => {
+        if (typeof document !== 'undefined') {
+          document.cookie = 'admin_session=; path=/; max-age=0; SameSite=Lax'
+        }
+        set({ user: null, accessToken: null, isAuthenticated: false })
+      },
 
       setHydrated: (value) => set({ isHydrated: value }),
 
@@ -42,6 +50,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'obrive-auth',
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true)
+      },
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

@@ -1,74 +1,80 @@
-// apps/web/app/admin/layout.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { useEffect } from 'react'
+import { X } from 'lucide-react'
 import { Sidebar } from '@/components/admin/layout/Sidebar'
 import { useAuthStore } from '@/store/auth.store'
+import { useUIStore } from '@/store/ui.store'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [drawerOpen, setDrawerOpen] = useState(false)
-
-  const router = useRouter()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const isHydrated = useAuthStore((state) => state.isHydrated)
+  const isMobileSidebarOpen = useUIStore((state) => state.isMobileSidebarOpen)
+  const closeMobileSidebar = useUIStore((state) => state.closeMobileSidebar)
 
   useEffect(() => {
     if (!isHydrated) return
 
     if (!isAuthenticated) {
-      router.replace('/login')
+      window.location.href = '/login'
     }
-  }, [isHydrated, isAuthenticated, router])
+  }, [isHydrated, isAuthenticated])
 
-  if (!isHydrated || !isAuthenticated) {
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#F0FAF5]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+          <p className="text-xs font-medium text-emerald-800 animate-pulse">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
     return null
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Desktop sidebar */}
-      {/* <aside className="hidden lg:flex lg:w-64 lg:shrink-0 border-r">
+    <div className="flex min-h-screen bg-[#F0FAF5]/40 text-gray-900">
+      {/* Desktop Sidebar: Static pinned to viewport while the page content scrolls */}
+      <aside className="hidden lg:flex lg:w-64 xl:w-72 lg:shrink-0 sticky top-0 h-screen z-30">
+        <Sidebar />
+      </aside>
 
-      </aside> */}
-
-      <Sidebar />
-
-      {/* Floating hamburger - mobile only, always visible, above everything */}
-      <button
-        onClick={() => setDrawerOpen(true)}
-        aria-label="Open menu"
-        className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-white border shadow-md flex items-center justify-center text-gray-600"
+      {/* Mobile Drawer */}
+      <div
+        className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${
+          isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
       >
-        <Menu className="h-5 w-5" />
-      </button>
-
-      {/* Mobile drawer */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${drawerOpen ? '' : 'pointer-events-none'}`}>
+        {/* Backdrop */}
         <div
-          onClick={() => setDrawerOpen(false)}
-          className={`absolute inset-0 bg-black/40 transition-opacity ${drawerOpen ? 'opacity-100' : 'opacity-0'
-            }`}
+          onClick={closeMobileSidebar}
+          className={`absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300 ${
+            isMobileSidebarOpen ? 'opacity-100' : 'opacity-0'
+          }`}
         />
 
+        {/* Sliding Sidebar Panel */}
         <div
-          className={`absolute left-0 top-0 h-full w-72 max-w-[85%] shadow-xl transition-transform ${drawerOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
+          className={`relative h-full w-72 max-w-[85%] bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+            isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
         >
           <button
-            onClick={() => setDrawerOpen(false)}
+            onClick={closeMobileSidebar}
             aria-label="Close menu"
-            className="absolute right-3 top-4 p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 z-10"
+            className="absolute right-3.5 top-4 p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors z-20"
           >
             <X className="h-5 w-5" />
           </button>
 
-          <Sidebar onNavigate={() => setDrawerOpen(false)} />
+          <Sidebar onNavigate={closeMobileSidebar} />
         </div>
       </div>
 
-      {/* Main column */}
+      {/* Main Content Column: Moves & scrolls freely */}
       <div className="flex flex-1 flex-col min-w-0">
         {children}
       </div>

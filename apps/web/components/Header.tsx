@@ -81,7 +81,7 @@ export default function Header({ categoryName }: HeaderProps) {
                             height={60}
                         />
             
-            <span className="text-[8px] font-medium font-sans align-top relative -top-[7px]  text-[#022c22]">©</span>
+            <span className="text-[0.5rem] font-medium font-sans align-top relative -top-[0.4375rem]  text-[#022c22]">©</span>
           </div>
 
         {/* RIGHT SECTION: CTA Button */}

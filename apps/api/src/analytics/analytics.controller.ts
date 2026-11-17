@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common'
+import { Controller, Get, Query, UseGuards } from '@nestjs/common'
 import { AnalyticsService } from './analytics.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
@@ -16,7 +16,10 @@ export class AnalyticsController {
   }
 
   @Get('revenue-trend')
-  getRevenueTrend() {
-    return this.analyticsService.getRevenueTrend()
+  getRevenueTrend(@Query('year') year?: string, @Query('month') month?: string) {
+    return this.analyticsService.getRevenueTrend(
+      year ? parseInt(year, 10) : undefined,
+      month ? parseInt(month, 10) : undefined
+    )
   }
 }

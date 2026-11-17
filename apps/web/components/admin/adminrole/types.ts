@@ -6,5 +6,7 @@ export interface AdminProfile {
   dob: string
   location: string
   avatarUrl?: string
+  role?: string
+  bio?: string
   socials: { provider: 'Google' | 'Facebook' | 'X'; linked: boolean }[]
 }

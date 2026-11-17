@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { StorageService } from '../storage/storage.service'
 import { OrderStatus } from '@prisma/client'
 
 const PAID_STATUSES: OrderStatus[] = [OrderStatus.CONFIRMED, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED]
@@ -24,6 +25,7 @@ export interface CreateProductDto {
   taxCode?: string
   hsnCode?: string
   gstRate?: number
+  gst?: number
   imagePath?: string
   images?: string[]
   galleryImages?: string[]
@@ -44,7 +46,9 @@ export interface UpdateProductDto extends Partial<CreateProductDto> {}
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  private cachedCuratedTaxes: any[] | null = null
+
+  constructor(private prisma: PrismaService, private storageService: StorageService) {}
 
   async getDashboardStats() {
     const since = new Date()
@@ -116,44 +120,69 @@ export class AdminService {
     }
   }
 
-  async getTaxes() {
-    let taxes = await this.prisma.taxMaster.findMany({
+  async getTaxes(search?: string, code?: string) {
+    // 1. If searching, query dynamically with limit 50 for instantaneous response
+    if (search && search.trim()) {
+      const q = search.trim()
+      const taxes = await this.prisma.taxMaster.findMany({
+        where: {
+          OR: [
+            { code: { contains: q, mode: 'insensitive' } },
+            { description: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 50,
+        orderBy: { code: 'asc' },
+      })
+      return taxes.map((t) => ({
+        code: t.code,
+        description: t.description,
+        type: t.type,
+        gstRate: Number(t.gstRate),
+      }))
+    }
+
+    // 2. Return cached curated taxes if available and no special code requested
+    if (!code && this.cachedCuratedTaxes && this.cachedCuratedTaxes.length > 0) {
+      return this.cachedCuratedTaxes
+    }
+
+    // 3. Curated priority codes for automotive, mobility, accessories, EV, and services
+    const priorityCodes = [
+      '8708', '8714', '8703', '8504', '8715',
+      '3402', '3405', '3926', '8512', '8507',
+      '4011', '4012', '4013', '2710', '8421',
+      '8511', '8527', '7318', '9968', '9983',
+      '9987', '9972',
+    ]
+
+    const codesToFetch = code && !priorityCodes.includes(code)
+      ? [code, ...priorityCodes]
+      : priorityCodes
+
+    const taxes = await this.prisma.taxMaster.findMany({
+      where: {
+        OR: [
+          { code: { in: codesToFetch } },
+          { code: { startsWith: '87' } }, // other motor vehicle codes
+        ],
+      },
+      take: 60,
       orderBy: { code: 'asc' },
     })
 
-    if (!taxes || taxes.length === 0) {
-      const defaultTaxes = [
-        { code: '8703', description: 'Electric Vehicles & Specialized Parts', type: 'HSN', gstRate: 5.0 },
-        { code: '8504', description: 'EV Chargers & Power Adapters', type: 'HSN', gstRate: 5.0 },
-        { code: '8715', description: 'Child Safety Car Seats & Carriers', type: 'HSN', gstRate: 12.0 },
-        { code: '8708', description: 'Motor Vehicle Parts & Accessories', type: 'HSN', gstRate: 18.0 },
-        { code: '8714', description: 'Motorcycle & Bicycle Parts', type: 'HSN', gstRate: 18.0 },
-        { code: '3402', description: 'Car Wash Shampoo & Cleaning Prep', type: 'HSN', gstRate: 18.0 },
-        { code: '3405', description: 'Polishes, Waxes & Detailing Compounds', type: 'HSN', gstRate: 18.0 },
-        { code: '3926', description: 'Interior Plastic Organizers & Trims', type: 'HSN', gstRate: 18.0 },
-        { code: '8512', description: 'Automotive Lighting, Horns & Electronics', type: 'HSN', gstRate: 18.0 },
-        { code: '4011', description: 'Pneumatic Rubber Tyres & Tubes', type: 'HSN', gstRate: 28.0 },
-        { code: '9968', description: 'Shipping & Courier Logistics (SAC)', type: 'SAC', gstRate: 18.0 },
-        { code: '9983', description: 'Platform Services & Convenience Fee (SAC)', type: 'SAC', gstRate: 18.0 },
-      ]
-
-      for (const t of defaultTaxes) {
-        await this.prisma.taxMaster.upsert({
-          where: { code: t.code },
-          update: { description: t.description, gstRate: t.gstRate, type: t.type },
-          create: t,
-        })
-      }
-
-      taxes = await this.prisma.taxMaster.findMany({ orderBy: { code: 'asc' } })
-    }
-
-    return taxes.map((t) => ({
+    const mapped = taxes.map((t) => ({
       code: t.code,
       description: t.description,
       type: t.type,
       gstRate: Number(t.gstRate),
     }))
+
+    if (!code) {
+      this.cachedCuratedTaxes = mapped
+    }
+
+    return mapped
   }
 
   async listProducts(search?: string, limit = 20, page = 1) {
@@ -188,7 +217,10 @@ export class AdminService {
       sku: p.productId,
       basePrice: Number(p.productCost),
       price: Number(p.price),
-      gstRate: p.tax?.gstRate ? Number(p.tax.gstRate) : Number(p.gstRate ?? 18),
+      gstRate: p.gstRate !== null && p.gstRate !== undefined
+        ? Number(p.gstRate)
+        : (p.tax?.gstRate ? Number(p.tax.gstRate) : 18),
+      gst: p.gst !== null && p.gst !== undefined ? Number(p.gst) : undefined,
       description: p.productDescription || p.longDescription || '',
       category: {
         id: p.category.id,
@@ -220,7 +252,10 @@ export class AdminService {
       sku: product.productId,
       basePrice: Number(product.productCost),
       price: Number(product.price),
-      gstRate: product.tax?.gstRate ? Number(product.tax.gstRate) : Number(product.gstRate ?? 18),
+      gstRate: product.gstRate !== null && product.gstRate !== undefined
+        ? Number(product.gstRate)
+        : (product.tax?.gstRate ? Number(product.tax.gstRate) : 18),
+      gst: product.gst !== null && product.gst !== undefined ? Number(product.gst) : undefined,
       category: {
         id: product.category.id,
         name: product.category.categoryName,
@@ -249,21 +284,30 @@ export class AdminService {
     }
 
     // Tax calculation
-    const taxCode = dto.taxCode || dto.hsnCode || null
-    let gstRate = 18
-    if (taxCode) {
+    const rawHsn = dto.hsnCode || dto.taxCode || null
+    let validTaxCode: string | null = null
+    let taxMasterGstRate: number | null = null
+
+    if (rawHsn) {
       const taxRecord = await this.prisma.taxMaster.findUnique({
-        where: { code: taxCode },
+        where: { code: rawHsn },
       })
       if (taxRecord) {
-        gstRate = Number(taxRecord.gstRate)
+        validTaxCode = taxRecord.code
+        taxMasterGstRate = Number(taxRecord.gstRate)
       }
-    } else if (dto.gstRate) {
-      gstRate = Number(dto.gstRate)
     }
 
+    // Explicit dto.gstRate has highest priority; next is TaxMaster; fallback is 18
+    const gstRate = dto.gstRate !== undefined && dto.gstRate !== null
+      ? Number(dto.gstRate)
+      : (taxMasterGstRate !== null ? taxMasterGstRate : 18)
+
     const baseCost = Number(dto.productCost ?? dto.basePrice ?? 0)
-    const gstAmount = Number(((baseCost * gstRate) / 100).toFixed(2))
+    const gstAmount = dto.gst !== undefined && dto.gst !== null
+      ? Number(dto.gst)
+      : Number(((baseCost * gstRate) / 100).toFixed(2))
+
     const finalPrice = dto.price ? Number(dto.price) : Number((baseCost + gstAmount).toFixed(2))
 
     // Parse features array
@@ -297,8 +341,8 @@ export class AdminService {
         platformCharges: dto.platformCharges ? Number(dto.platformCharges) : 0,
         discountCoupon: dto.discountCoupon || null,
         currencySymbol: dto.currencySymbol || '₹',
-        taxCode,
-        hsnCode: taxCode,
+        taxCode: validTaxCode,
+        hsnCode: rawHsn,
         gst: gstAmount,
         gstRate,
         imagePath: primaryImage,
@@ -371,29 +415,45 @@ export class AdminService {
     }
 
     // Pricing & Tax updates
-    const taxCode = dto.taxCode !== undefined ? dto.taxCode : (dto.hsnCode !== undefined ? dto.hsnCode : existing.taxCode)
-    data.taxCode = taxCode
-    data.hsnCode = taxCode
+    const rawHsn = dto.hsnCode !== undefined ? dto.hsnCode : (dto.taxCode !== undefined ? dto.taxCode : existing.hsnCode)
+    data.hsnCode = rawHsn
 
-    let gstRate = Number(existing.gstRate ?? 18)
-    if (taxCode && taxCode !== existing.taxCode) {
-      const taxRecord = await this.prisma.taxMaster.findUnique({ where: { code: taxCode } })
-      if (taxRecord) gstRate = Number(taxRecord.gstRate)
-      data.gstRate = gstRate
-    }
-
-    if (dto.productCost !== undefined || dto.basePrice !== undefined) {
-      const baseCost = Number(dto.productCost ?? dto.basePrice)
-      data.productCost = baseCost
-      const gstAmount = Number(((baseCost * gstRate) / 100).toFixed(2))
-      data.gst = gstAmount
-      if (dto.price === undefined) {
-        data.price = Number((baseCost + gstAmount).toFixed(2))
+    let validTaxCode: string | null = null
+    let taxMasterGstRate: number | null = null
+    if (rawHsn) {
+      const taxRecord = await this.prisma.taxMaster.findUnique({ where: { code: rawHsn } })
+      if (taxRecord) {
+        validTaxCode = taxRecord.code
+        taxMasterGstRate = Number(taxRecord.gstRate)
       }
     }
+    data.taxCode = validTaxCode
 
-    if (dto.price !== undefined) {
+    let gstRate = Number(existing.gstRate ?? 18)
+    if (dto.gstRate !== undefined && dto.gstRate !== null) {
+      gstRate = Number(dto.gstRate)
+    } else if (taxMasterGstRate !== null && rawHsn !== existing.hsnCode) {
+      gstRate = taxMasterGstRate
+    }
+    data.gstRate = gstRate
+
+    const baseCost = dto.productCost !== undefined || dto.basePrice !== undefined
+      ? Number(dto.productCost ?? dto.basePrice)
+      : Number(existing.productCost)
+
+    if (dto.productCost !== undefined || dto.basePrice !== undefined) {
+      data.productCost = baseCost
+    }
+
+    const gstAmount = dto.gst !== undefined && dto.gst !== null
+      ? Number(dto.gst)
+      : Number(((baseCost * gstRate) / 100).toFixed(2))
+    data.gst = gstAmount
+
+    if (dto.price !== undefined && dto.price !== null) {
       data.price = Number(dto.price)
+    } else if (dto.productCost !== undefined || dto.gstRate !== undefined) {
+      data.price = Number((baseCost + gstAmount).toFixed(2))
     }
 
     if (dto.platformCharges !== undefined) data.platformCharges = Number(dto.platformCharges)
@@ -413,6 +473,10 @@ export class AdminService {
     if (dto.discountText !== undefined) data.discountText = dto.discountText
     if (dto.shippingInformation !== undefined) data.shippingInformation = dto.shippingInformation
     if (dto.attributes !== undefined) data.attributes = dto.attributes
+
+    if (dto.images && Array.isArray(dto.images) && existing.images) {
+      this.storageService.diffAndDeleteImages(existing.images, dto.images)
+    }
 
     const updated = await this.prisma.product.update({
       where: { id: existing.id },
@@ -442,6 +506,19 @@ export class AdminService {
       where: { OR: [{ id }, { productId: id }] },
     })
     if (!existing) throw new NotFoundException('Product not found')
+
+    // Clean up product images and directory from storage
+    if (existing.productId) {
+      this.storageService.deleteProductFolder(existing.productId)
+    }
+    if (existing.id && existing.id !== existing.productId) {
+      this.storageService.deleteProductFolder(existing.id)
+    }
+    if (existing.images && existing.images.length > 0) {
+      for (const img of existing.images) {
+        this.storageService.deleteFile(img)
+      }
+    }
 
     await this.prisma.product.delete({
       where: { id: existing.id },

@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Michroma&display=swap');
 @import "tailwindcss";
 
+html {
+  font-size: 82.5%;
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -12,6 +16,10 @@
   --muted-foreground: 215.4 16.3% 46.9%;
   --border: 214.3 31.8% 91.4%;
   --radius: 0.5rem;
+  --font-geist-sans: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-michroma: 'Michroma', sans-serif;
+  --font-microgamma: 'Microgramma Extended', sans-serif;
+  --font-microgamma-bold: 'Microgramma Extended', sans-serif;
 }
 
 .dark {
@@ -31,16 +39,154 @@
 }
 
 body {
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.5;
   background-color: #F0FAF5;
   color: hsl(var(--foreground));
-}
-input::placeholder {
-  font-family: var(--font-michroma);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+@theme {
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: var(--font-microgramma), 'Microgramma Extended', sans-serif;
+  --font-michroma: var(--font-michroma), 'Michroma', sans-serif;
 
-:root {
-  --font-michroma: 'Michroma', sans-serif;
-  --font-microgamma: 'Microgramma Extended', sans-serif;
-  --font-microgamma-bold: 'Microgramma Extended', sans-serif;
+  /* Rich high-contrast grays so secondary and helper texts are never washed out or bleached */
+  --color-gray-300: #94a3b8;
+  --color-gray-400: #64748b;
+  --color-gray-500: #475569;
+}
+
+/* Form Input Labels - Darker (#111827) and slightly larger (0.875rem / text-sm) for enhanced readability */
+label:not(.cursor-pointer):not([class*="badge"]),
+.form-label {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  line-height: 1.35;
+}
+
+/* Custom slim scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(7, 65, 57, 0.2);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(7, 65, 57, 0.4);
+}
+
+/* ==========================================================================
+   AG Grid Global Theme & Typography Overrides
+   Ensures table headers and pagination footer match row data text size
+   ========================================================================== */
+.ag-theme-quartz,
+.ag-root-wrapper {
+  --ag-font-size: 0.875rem;
+  --ag-header-font-size: 0.875rem;
+  font-size: 0.875rem !important;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: #1f2937 !important;
+}
+
+/* Column Header text styling */
+.ag-header-cell-text,
+.ag-header-group-cell-text,
+.ag-header-cell-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  letter-spacing: 0.01em;
+  line-height: normal !important;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.ag-header-cell {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+/* Pagination panel / Footer details */
+.ag-paging-panel {
+  font-size: 0.875rem !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  color: #374151 !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 0 12px !important;
+}
+
+.ag-paging-panel .ag-paging-page-summary-panel,
+.ag-paging-panel .ag-paging-row-summary-panel,
+.ag-paging-panel .ag-paging-page-size,
+.ag-paging-panel .ag-paging-description,
+.ag-paging-panel span,
+.ag-paging-panel div {
+  font-size: 0.875rem !important;
+  color: #374151 !important;
+  font-weight: 500;
+}
+
+.ag-paging-panel .ag-picker-field,
+.ag-paging-panel .ag-select,
+.ag-paging-panel .ag-picker-field-wrapper {
+  font-size: 0.875rem !important;
+  height: 26px !important;
+  min-height: 26px !important;
+}
+
+.ag-paging-panel .ag-picker-field-display {
+  font-size: 0.875rem !important;
+  padding: 0 6px !important;
+  line-height: 24px !important;
+}
+
+.ag-paging-panel .ag-paging-button,
+.ag-paging-panel .ag-button {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  font-size: 0.875rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 1px !important;
+}
+
+.ag-paging-panel .ag-icon {
+  font-size: 12px !important;
+}
+
+/* Row cells font-size & vertical centering */
+.ag-cell {
+  font-size: 0.875rem !important;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: #1f2937 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ag-cell-wrapper,
+.ag-cell-value,
+.ag-react-container {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.ag-header-cell-label {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
 }

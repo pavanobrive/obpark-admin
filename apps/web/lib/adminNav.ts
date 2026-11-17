@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, ShoppingCart, Users, Ticket, FolderTree,
   CreditCard, PlusCircle, ImageIcon, PackageSearch,
-  MessageSquareText, Star, Settings,
+  MessageSquareText, ShieldCheck, Settings, TrendingUp,
 } from 'lucide-react'
 
 export const ADMIN_NAV_ITEMS = [
@@ -11,11 +11,11 @@ export const ADMIN_NAV_ITEMS = [
   { href: '/admin/coupons', label: 'Coupon Code', icon: Ticket },
   { href: '/admin/categories', label: 'Categories', icon: FolderTree },
   { href: '/admin/transactions', label: 'Transaction', icon: CreditCard },
-  { href: '/admin/analytics', label: 'Analytics', icon: LayoutDashboard },
+  { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
   { href: '/admin/products/add', label: 'Add Products', icon: PlusCircle },
-  { href: '/admin/products/media', label: 'Product Media', icon: ImageIcon },
+  // { href: '/admin/products/media', label: 'Product Media', icon: ImageIcon }, // Hidden for now: to be converted to Banners & Promotional Media
   { href: '/admin/products', label: 'Product List', icon: PackageSearch, exact: true },
   { href: '/admin/products/reviews', label: 'Product Reviews', icon: MessageSquareText },
-  { href: '/admin/adminrole', label: 'Admin Role', icon: Star },
+  { href: '/admin/adminrole', label: 'Admin Role', icon: ShieldCheck },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]

@@ -43,6 +43,16 @@ export class CustomersService {
       const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Customer'
       const primaryAddress = u.addresses[0]
 
+      const rawImage = u.profileImage?.trim()
+      const avatarUrl =
+        rawImage && rawImage !== 'null' && rawImage !== 'undefined'
+          ? rawImage.startsWith('http://') || rawImage.startsWith('https://')
+            ? rawImage
+            : rawImage.startsWith('/uploads/')
+            ? rawImage
+            : `/uploads/${rawImage.replace(/^\/?(uploads\/)?/, '')}`
+          : null
+
       return {
         id: String(index + 1),
         userId: u.id,
@@ -51,13 +61,14 @@ export class CustomersService {
         phone: u.phoneNumber ?? '—',
         orderCount,
         totalSpend,
-        avatar: u.profileImage ?? null,
+        avatar: avatarUrl,
         city: u.city || (primaryAddress ? primaryAddress.city : '—'),
         status: u.isActive ? 'Active' : 'Inactive',
+        createdAt: u.createdAt,
         addresses: u.addresses.map((a) => ({
           id: a.id,
           label: a.label,
-          type: a.type,
+          type: a.label,
           streetAddress: a.streetAddress,
           apartmentSuite: a.apartmentSuite,
           city: a.city,

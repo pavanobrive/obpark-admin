@@ -8,6 +8,9 @@ export interface Category {
   slug: string
   shortDescription?: string
   description?: string // alias
+  cardImage?: string // 1. Shop page category card
+  bannerImage?: string // 2. Category page hero banner
+  sliderImage?: string // 3. Carousel slider ("Everything Your Car Needs")
   imagePath?: string
   imageUrl?: string // alias
   productCount?: number
@@ -18,9 +21,12 @@ export interface Category {
 export interface CreateCategoryPayload {
   categoryName?: string
   name?: string
-  slug: string
+  slug?: string
   shortDescription?: string
   description?: string
+  cardImage?: string
+  bannerImage?: string
+  sliderImage?: string
   imagePath?: string
   imageUrl?: string
 }
@@ -31,6 +37,9 @@ export interface UpdateCategoryPayload {
   slug?: string
   shortDescription?: string
   description?: string
+  cardImage?: string
+  bannerImage?: string
+  sliderImage?: string
   imagePath?: string
   imageUrl?: string
 }

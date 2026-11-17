@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
                 <k.icon className={`h-5 w-5 ${k.color}`} />
               </div>
               <p className="text-2xl font-bold text-gray-800">{k.loading ? '—' : k.value}</p>
-              <p className={`${microgrammaBold.className} text-[16px] text-[#074891]-500 mt-1`}>{k.label}</p>
+              <p className={`${microgrammaBold.className} text-[1rem] text-[#074891]-500 mt-1`}>{k.label}</p>
             </div>
           ))}
         </div>
@@ -109,12 +109,12 @@ export default function AnalyticsPage() {
           {/* Revenue trend — real, from AnalyticsService.getRevenueTrend */}
           <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Revenue Trend</h2>
+              <h2 className={`${microgrammaBold.className} font-semibold text-[1.125rem] text-gray-800`}>Revenue Trend</h2>
               <Link href="/admin/orders" className="text-xs text-blue-500 flex items-center gap-1">
                 View Orders <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={154}>
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="analyticsRev" x1="0" y1="0" x2="0" y2="1">
@@ -122,8 +122,8 @@ export default function AnalyticsPage() {
                     <stop offset="100%" stopColor="#A2F1DF" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={11} />
-                <YAxis axisLine={false} tickLine={false} fontSize={11} tickFormatter={(v) => `${v / 1000}k`} />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={8} />
+                <YAxis axisLine={false} tickLine={false} fontSize={8} tickFormatter={(v) => `${v / 1000}k`} />
                 <Tooltip formatter={(v: any) => `₹${Number(v).toLocaleString('en-IN')}`} />
                 <Area type="monotone" dataKey="value" stroke="#22c55e" fill="url(#analyticsRev)" strokeWidth={2} />
               </AreaChart>
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
           {/* Order status breakdown — real, from AnalyticsService.getOrderStatusBreakdown */}
           <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-2">
-              <h2 className={`${microgrammaBold.className} font-semibold text-[16px] text-gray-800`}>Order Status</h2>
+              <h2 className={`${microgrammaBold.className} font-semibold text-[1rem] text-gray-800`}>Order Status</h2>
               <Link href="/admin/orders" className="text-xs text-blue-500 flex items-center gap-1">
                 View <ArrowRight className="h-3 w-3" />
               </Link>
@@ -147,9 +147,9 @@ export default function AnalyticsPage() {
               <div className="h-40 flex items-center justify-center text-sm text-gray-400">No orders yet</div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={160}>
+                <ResponsiveContainer width="100%" height={112}>
                   <PieChart>
-                    <Pie data={statusData} dataKey="value" innerRadius={40} outerRadius={65} paddingAngle={2}>
+                    <Pie data={statusData} dataKey="value" innerRadius={28} outerRadius={46} paddingAngle={2}>
                       {statusData.map((entry, i) => (
                         <Cell key={i} fill={entry.color} />
                       ))}
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Top Products</h2>
+              <h2 className={`${microgrammaBold.className} font-semibold text-[1.125rem] text-gray-800`}>Top Products</h2>
               <Link href="/admin/products" className="text-xs text-blue-500 flex items-center gap-1">
                 View Products <ArrowRight className="h-3 w-3" />
               </Link>
@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
 
           <div className="bg-white border rounded-xl p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`${microgrammaBold.className} font-semibold text-[18px] text-gray-800`}>Coupon Performance</h2>
+              <h2 className={`${microgrammaBold.className} font-semibold text-[1.125rem] text-gray-800`}>Coupon Performance</h2>
               <Link href="/admin/coupons" className="text-xs text-blue-500 flex items-center gap-1">
                 View Coupons <ArrowRight className="h-3 w-3" />
               </Link>

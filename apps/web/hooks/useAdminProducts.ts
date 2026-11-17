@@ -72,10 +72,15 @@ export function useAdminProduct(id: string) {
   })
 }
 
-export function useTaxes() {
+export function useTaxes(search?: string, code?: string) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (code) params.set('code', code)
+  const qs = params.toString() ? `?${params.toString()}` : ''
+
   return useQuery({
-    queryKey: ['admin', 'taxes'],
-    queryFn: () => api.get<TaxMasterItem[]>('/admin/taxes'),
+    queryKey: ['admin', 'taxes', search, code],
+    queryFn: () => api.get<TaxMasterItem[]>(`/admin/taxes${qs}`),
     staleTime: 1000 * 60 * 30, // 30 minutes
   })
 }

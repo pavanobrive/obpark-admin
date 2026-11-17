@@ -7,17 +7,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setAuth, clearAuth, setHydrated } = useAuthStore()
 
   useEffect(() => {
+    // If the store already rehydrated with an active session, ensure hydrated is set
+    setHydrated(true)
+
     refreshSession()
       .then((res) => {
-        setAuth(res.user, res.accessToken)
+        if (res?.user && res?.accessToken) {
+          setAuth(res.user, res.accessToken)
+        }
       })
       .catch(() => {
-        clearAuth()
+        // Only clear auth if we don't even have an access token stored
+        const currentToken = useAuthStore.getState().accessToken
+        if (!currentToken) {
+          clearAuth()
+        }
       })
       .finally(() => {
         setHydrated(true)
       })
-  }, [])
+  }, [setAuth, clearAuth, setHydrated])
 
   return <>{children}</>
 }

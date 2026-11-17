@@ -2,14 +2,16 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, MapPin, Phone, Mail, Check, User, ShoppingBag, CreditCard } from 'lucide-react'
+import { Copy, MapPin, Phone, Mail, Check, User, ShoppingBag, CreditCard, X } from 'lucide-react'
 import type { Customer } from './types'
+import { CustomerAvatar } from './CustomerAvatar'
 
 interface CustomerDetailPanelProps {
   customer: Customer | null
+  onClose?: () => void
 }
 
-export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
+export function CustomerDetailPanel({ customer, onClose }: CustomerDetailPanelProps) {
   const [copied, setCopied] = useState(false)
 
   const copyEmail = () => {
@@ -32,47 +34,54 @@ export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
       ) : (
         <div className="space-y-6">
           {/* Profile Header */}
-          <div className="flex items-center gap-3 pb-4 border-b">
-            {customer.avatar ? (
-              <img
+          <div className="flex items-start justify-between pb-4 border-b gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <CustomerAvatar
                 src={customer.avatar}
-                alt=""
-                className="w-14 h-14 rounded-full object-cover bg-gray-100 border shrink-0"
+                name={customer.name}
+                size="lg"
               />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold flex items-center justify-center text-lg shrink-0">
-                {customer.name.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="font-bold text-gray-800 truncate text-base">{customer.name}</p>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                    customer.status === 'VIP'
-                      ? 'bg-amber-100 text-amber-700'
-                      : customer.status === 'Active'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {customer.status}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                <span className="truncate">{customer.email || 'No email registered'}</span>
-                {customer.email && customer.email !== '—' && (
-                  <button
-                    onClick={copyEmail}
-                    aria-label="Copy email"
-                    className="shrink-0 text-gray-400 hover:text-gray-600 p-0.5"
-                    title="Copy email"
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-gray-800 truncate text-base">{customer.name}</p>
+                  <span
+                    className={`text-[0.625rem] px-2 py-0.5 rounded-full font-semibold ${
+                      customer.status === 'VIP'
+                        ? 'bg-amber-100 text-amber-700'
+                        : customer.status === 'Active'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
                   >
-                    {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-                  </button>
-                )}
+                    {customer.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                  <span className="truncate">{customer.email || 'No email registered'}</span>
+                  {customer.email && customer.email !== '—' && (
+                    <button
+                      onClick={copyEmail}
+                      aria-label="Copy email"
+                      className="shrink-0 text-gray-400 hover:text-gray-600 p-0.5"
+                      title="Copy email"
+                    >
+                      {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close detail panel"
+                className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Quick Metrics */}
@@ -134,7 +143,7 @@ export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
                         {addr.label || addr.type || 'Address'}
                       </span>
                       {addr.isDefault && (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[0.625rem] font-medium">
                           Default
                         </span>
                       )}
@@ -143,7 +152,7 @@ export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
                       {addr.streetAddress}
                       {addr.apartmentSuite ? `, ${addr.apartmentSuite}` : ''}
                     </div>
-                    <div className="text-gray-500 text-[11px]">
+                    <div className="text-gray-500 text-[0.6875rem]">
                       {addr.city}, {addr.zipCode} • {addr.country}
                     </div>
                   </div>
@@ -163,7 +172,7 @@ export function CustomerDetailPanel({ customer }: CustomerDetailPanelProps) {
               {['Phone Verified', 'Platform User'].map((label) => (
                 <div
                   key={label}
-                  className="px-2.5 py-1 rounded-md bg-gray-100 text-[11px] font-medium text-gray-600"
+                  className="px-2.5 py-1 rounded-md bg-gray-100 text-[0.6875rem] font-medium text-gray-600"
                 >
                   {label}
                 </div>

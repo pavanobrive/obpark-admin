@@ -2,6 +2,7 @@
 
 import { Star, Check, X, Trash2 } from 'lucide-react'
 import { useProductReviews, useApproveReview, useRejectReview, useDeleteReview } from '@/hooks/useProductReviews'
+import { dialog } from '@/lib/dialog'
 
 const STATUS_STYLE: Record<string, string> = {
   Published: 'bg-green-100 text-green-600',
@@ -28,7 +29,7 @@ export function ProductReviewsList() {
           <div className="divide-y">
             {reviews.map((r) => (
               <div key={r.id} className="py-4 flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-[240px]">
+                <div className="flex-1 min-w-[15rem]">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-gray-800 text-sm">{r.customerName}</p>
                     <span className="text-xs text-gray-400">on {r.productName}</span>
@@ -62,7 +63,16 @@ export function ProductReviewsList() {
                     </button>
                     <button
                       aria-label="Delete review"
-                      onClick={() => { if (confirm('Delete this review?')) deleteReview.mutate(r.id) }}
+                      onClick={async () => {
+                        const confirmed = await dialog.confirm({
+                          title: 'Delete Review',
+                          message: 'Are you sure you want to delete this customer review?',
+                          confirmText: 'Delete Review',
+                          cancelText: 'Cancel',
+                          variant: 'danger',
+                        })
+                        if (confirmed) deleteReview.mutate(r.id)
+                      }}
                       disabled={deleteReview.isPending}
                       className="text-gray-400 hover:text-red-500 disabled:opacity-40"
                     >

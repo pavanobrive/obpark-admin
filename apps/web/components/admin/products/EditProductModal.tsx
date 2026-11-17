@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { X, Loader2, Plus, Trash2, Upload, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { AdminProduct, useUpdateProduct, useTaxes } from '@/hooks/useAdminProducts'
+import { AdminProduct, useUpdateProduct, TaxMasterItem } from '@/hooks/useAdminProducts'
 import { useCategories } from '@/hooks/useCategories'
 import { useAuthStore } from '@/store/auth.store'
 import { microgrammaBold } from '@/lib/fonts'
+import { dialog } from '@/lib/dialog'
+import { HsnTaxSelect } from './HsnTaxSelect'
 
 interface EditProductModalProps {
   product: AdminProduct
@@ -15,7 +17,6 @@ interface EditProductModalProps {
 export function EditProductModal({ product, onClose }: EditProductModalProps) {
   const updateProduct = useUpdateProduct()
   const { data: categories = [] } = useCategories()
-  const { data: taxes = [] } = useTaxes()
 
   const [form, setForm] = useState({
     productId: product.productId || '',
@@ -47,45 +48,40 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
   const [uploadError, setUploadError] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Find selected tax rule from database taxes list
-  const selectedTax = useMemo(() => {
-    if (!form.hsnCode) return null
-    return taxes.find((t) => t.code === form.hsnCode) || null
-  }, [form.hsnCode, taxes])
-
-  const gstRate = selectedTax ? Number(selectedTax.gstRate) : Number(product.gstRate ?? 18)
+  const [selectedGstRate, setSelectedGstRate] = useState<number>(Number(product.gstRate ?? 18))
 
   // Real-time calculation: Base Cost + GST = Final Selling Price
   const calculations = useMemo(() => {
     const cost = parseFloat(form.productCost) || 0
-    const gstAmount = Number(((cost * gstRate) / 100).toFixed(2))
+    const gstAmount = Number(((cost * selectedGstRate) / 100).toFixed(2))
     const calculatedPrice = Number((cost + gstAmount).toFixed(2))
     return { cost, gstAmount, calculatedPrice }
-  }, [form.productCost, gstRate])
+  }, [form.productCost, selectedGstRate])
 
   // When HSN or cost changes, keep price in sync unless user deliberately edits price
-  const handleCostChange = (val: string) => {
+  const handleCostChange = useCallback((val: string) => {
     const cost = parseFloat(val) || 0
-    const gstAmount = Number(((cost * gstRate) / 100).toFixed(2))
+    const gstAmount = Number(((cost * selectedGstRate) / 100).toFixed(2))
     setForm((prev) => ({
       ...prev,
       productCost: val,
       price: String(Number((cost + gstAmount).toFixed(2))),
     }))
-  }
+  }, [selectedGstRate])
 
-  const handleHsnChange = (code: string) => {
-    const chosen = taxes.find((t) => t.code === code)
-    const rate = chosen ? Number(chosen.gstRate) : 18
-    const cost = parseFloat(form.productCost) || 0
-    const gstAmount = Number(((cost * rate) / 100).toFixed(2))
-    setForm((prev) => ({
-      ...prev,
-      hsnCode: code,
-      price: String(Number((cost + gstAmount).toFixed(2))),
-    }))
-  }
+  const handleHsnChange = useCallback((code: string, item?: TaxMasterItem | null) => {
+    const rate = item?.gstRate !== undefined && item?.gstRate !== null ? Number(item.gstRate) : selectedGstRate
+    setSelectedGstRate(rate)
+    setForm((prev) => {
+      const cost = parseFloat(prev.productCost) || 0
+      const gstAmount = Number(((cost * rate) / 100).toFixed(2))
+      return {
+        ...prev,
+        hsnCode: code,
+        price: String(Number((cost + gstAmount).toFixed(2))),
+      }
+    })
+  }, [selectedGstRate])
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
@@ -97,9 +93,15 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
       const uploaded: string[] = []
       const token = useAuthStore.getState().accessToken
 
-      for (const file of Array.from(files)) {
+      const fileList = Array.from(files)
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i]
         const formData = new FormData()
         formData.append('file', file)
+        const prodSlug = form.productId.trim() || product.productId || 'general'
+        formData.append('type', 'product')
+        formData.append('slug', prodSlug)
+        formData.append('index', String(images.length + i + 1))
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3055'}/admin/media/upload`,
           {
@@ -118,6 +120,11 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
       setImages((prev) => [...prev, ...uploaded])
     } catch {
       setUploadError('Failed to upload image. Please try again or paste image URL.')
+      dialog.alert({
+        title: 'Upload Failed',
+        message: 'Failed to upload product image. Please try again or paste an image URL.',
+        variant: 'error',
+      })
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -174,7 +181,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
           discountText: form.discountText.trim() || undefined,
           hsnCode: form.hsnCode || undefined,
           taxCode: form.hsnCode || undefined,
-          gstRate,
+          gstRate: selectedGstRate,
           gst: calculations.gstAmount,
           currencySymbol: '₹',
           categoryId: form.categoryId,
@@ -242,7 +249,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Product Name *</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Product Name *</label>
                 <input
                   value={form.productName}
                   onChange={(e) => setForm({ ...form, productName: e.target.value })}
@@ -253,7 +260,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Product ID (Unique SKU) *</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Product ID (Unique SKU) *</label>
                 <input
                   value={form.productId}
                   onChange={(e) => setForm({ ...form, productId: e.target.value })}
@@ -266,7 +273,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Product Subtitle / Heading</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Product Subtitle / Heading</label>
                 <input
                   value={form.productHeading}
                   onChange={(e) => setForm({ ...form, productHeading: e.target.value })}
@@ -276,7 +283,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Brand</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Brand</label>
                 <input
                   value={form.brand}
                   onChange={(e) => setForm({ ...form, brand: e.target.value })}
@@ -287,7 +294,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Category *</label>
+              <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Category *</label>
               <select
                 value={form.categoryId}
                 onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
@@ -312,7 +319,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Base Cost (Excluding GST) *</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Base Cost (Excluding GST) *</label>
                 <div className="flex items-center border rounded-lg overflow-hidden focus-within:border-[#074139]">
                   <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r">₹</span>
                   <input
@@ -328,19 +335,12 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">HSN / Tax Rule</label>
-                <select
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">HSN Code / GST Bracket *</label>
+                <HsnTaxSelect
                   value={form.hsnCode}
-                  onChange={(e) => handleHsnChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:border-[#074139] bg-white"
-                >
-                  <option value="">Standard Default (18% GST)</option>
-                  {taxes.map((t) => (
-                    <option key={t.code} value={t.code}>
-                      [{t.type}] HSN {t.code} — {t.description} ({Number(t.gstRate)}% GST)
-                    </option>
-                  ))}
-                </select>
+                  currentGstRate={selectedGstRate}
+                  onChange={handleHsnChange}
+                />
               </div>
             </div>
 
@@ -349,7 +349,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               <div className="flex items-center justify-between text-xs font-medium text-emerald-900 mb-2">
                 <span>Dynamic GST Calculation</span>
                 <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                  {gstRate}% GST Slab
+                  {selectedGstRate}% GST Slab
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs">
@@ -360,7 +360,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500 block">GST ({gstRate}%)</span>
+                  <span className="text-gray-500 block">GST ({selectedGstRate}%)</span>
                   <span className="font-semibold text-emerald-700">
                     +₹{calculations.gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
@@ -376,7 +376,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Final Consumer Selling Price *</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Final Consumer Selling Price *</label>
                 <div className="flex items-center border rounded-lg overflow-hidden focus-within:border-[#074139]">
                   <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r">₹</span>
                   <input
@@ -392,7 +392,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-700 mb-1 block">Platform Charges (₹)</label>
+                <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Platform Charges (₹)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -412,7 +412,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
             </h3>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Short Description</label>
+              <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Short Description</label>
               <textarea
                 value={form.productDescription}
                 onChange={(e) => setForm({ ...form, productDescription: e.target.value })}
@@ -423,7 +423,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Long Description</label>
+              <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Long Description</label>
               <textarea
                 value={form.longDescription}
                 onChange={(e) => setForm({ ...form, longDescription: e.target.value })}
@@ -434,7 +434,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">
+              <label className="text-sm font-semibold text-gray-900 mb-1.5 block">
                 Product Features (Semicolon ; separated)
               </label>
               <textarea
@@ -444,11 +444,11 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
                 className="w-full px-3 py-2 rounded-lg border text-sm outline-none resize-none focus:border-[#074139]"
                 placeholder="Hydrophobic shine; UV resistance; Long lasting; Scratch resistant"
               />
-              <p className="text-[11px] text-gray-400 mt-0.5">Separate bullet points with a semicolon (;)</p>
+              <p className="text-[0.6875rem] text-gray-400 mt-0.5">Separate bullet points with a semicolon (;)</p>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Shipping & Delivery Info</label>
+              <label className="text-sm font-semibold text-gray-900 mb-1.5 block">Shipping & Delivery Info</label>
               <input
                 value={form.shippingInformation}
                 onChange={(e) => setForm({ ...form, shippingInformation: e.target.value })}
@@ -490,7 +490,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
               {images.map((url, idx) => (
                 <div key={idx} className="relative group aspect-square rounded-lg border bg-gray-50 overflow-hidden">
                   <img src={url} alt="" className="w-full h-full object-cover" />
-                  <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1 rounded">
+                  <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[0.5625rem] px-1 rounded">
                     #{idx + 1}
                   </span>
                   <button
@@ -537,7 +537,7 @@ export function EditProductModal({ product, onClose }: EditProductModalProps) {
             type="button"
             onClick={handleSave}
             disabled={updateProduct.isPending}
-            className={`${microgrammaBold.className} px-5 py-2 rounded-lg text-sm text-white font-medium flex items-center gap-2 shadow-xs disabled:opacity-50`}
+            className="px-5 py-2 rounded-lg text-sm text-white font-medium flex items-center gap-2 shadow-xs disabled:opacity-50 hover:opacity-95 transition-all"
             style={{ backgroundColor: '#074139' }}
           >
             {updateProduct.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

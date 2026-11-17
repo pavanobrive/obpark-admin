@@ -26,8 +26,11 @@ export class AdminController {
   }
 
   @Get('taxes')
-  getTaxes() {
-    return this.adminService.getTaxes()
+  getTaxes(
+    @Query('search') search?: string,
+    @Query('code') code?: string,
+  ) {
+    return this.adminService.getTaxes(search, code)
   }
 
   @Get('products')
