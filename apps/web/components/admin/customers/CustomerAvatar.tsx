@@ -55,7 +55,6 @@ export function CustomerAvatar({
       src={cleanSrc}
       alt={name ? `${name}'s avatar` : 'Customer avatar'}
       referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
       loading="lazy"
       onError={() => setHasError(true)}
       className={`${sizeClasses} rounded-full object-cover bg-gray-100 border border-gray-200 shrink-0 ${className}`}

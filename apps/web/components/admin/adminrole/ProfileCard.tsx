@@ -87,7 +87,6 @@ export function ProfileCard({ profile, isLoading, onEdit }: ProfileCardProps) {
                 src={getFullImageUrl(profile.avatarUrl)}
                 alt={fullName}
                 referrerPolicy="no-referrer"
-                crossOrigin="anonymous"
                 className="w-20 h-20 rounded-full object-cover border-2 border-emerald-500/20 shadow-sm"
               />
             ) : (
