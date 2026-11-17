@@ -18,7 +18,7 @@ const envSchema = z.object({
   /** Comma-separated browser origins allowed to call the API (e.g. Next.js dev server) */
   CORS_ORIGINS: z
     .string()
-    .default('http://localhost:3000,http://localhost:3002'),
+    .default('https://admin.obpark.in,https://obpark.in,http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8021'),
 
   // Razorpay (optional in dev — required in prod)
   RAZORPAY_KEY_ID: z.string().optional(),

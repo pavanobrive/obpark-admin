@@ -15,6 +15,13 @@ const allowedOrigins = new Set(
 function isCorsOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return true
   if (allowedOrigins.has(origin)) return true
+  if (
+    origin === 'https://admin.obpark.in' ||
+    origin === 'https://obpark.in' ||
+    origin.endsWith('.obpark.in')
+  ) {
+    return true
+  }
   // Next.js picks 3001, 3002, … when 3000 is busy — allow any localhost port in dev
   if (env.NODE_ENV === 'development' && /^http:\/\/localhost:\d+$/.test(origin)) {
     return true
@@ -47,10 +54,12 @@ async function bootstrap() {
       if (isCorsOriginAllowed(origin)) {
         callback(null, origin ?? true)
       } else {
-        callback(new Error(`CORS blocked origin: ${origin}`), false)
+        callback(null, false)
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   })
 
   const port = env.PORT
