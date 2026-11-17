@@ -14,16 +14,18 @@ const allowedOrigins = new Set(
 
 function isCorsOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return true
-  if (allowedOrigins.has(origin)) return true
   if (
     origin === 'https://admin.obpark.in' ||
     origin === 'https://obpark.in' ||
+    origin === 'https://admin-api.obpark.in' ||
+    origin === 'https://api.obpark.in' ||
     origin.endsWith('.obpark.in')
   ) {
     return true
   }
-  // Next.js picks 3001, 3002, … when 3000 is busy — allow any localhost port in dev
-  if (env.NODE_ENV === 'development' && /^http:\/\/localhost:\d+$/.test(origin)) {
+  if (allowedOrigins.has(origin)) return true
+  // Allow localhost ports
+  if (/^http:\/\/localhost:\d+$/.test(origin)) {
     return true
   }
   return false
@@ -34,6 +36,12 @@ async function bootstrap() {
   app.enableShutdownHooks()
   app.use(cookieParser())
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+
+  // Configure reverse proxy trust for accurate client IP resolution
+  const expressInstance = app.getHttpAdapter().getInstance()
+  if (typeof expressInstance?.set === 'function') {
+    expressInstance.set('trust proxy', 1)
+  }
 
   // Serve static uploaded assets directly from dynamic StorageService base directory
   const storageService = app.get(StorageService)
@@ -52,14 +60,15 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       if (isCorsOriginAllowed(origin)) {
-        callback(null, origin ?? true)
-      } else {
-        callback(null, false)
+        return callback(null, true)
       }
+      return callback(null, false)
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
+    maxAge: 86400,
   })
 
   const port = env.PORT
